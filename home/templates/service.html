@@ -1,0 +1,513 @@
+{% extends "base.html" %}
+
+{% block title %}Our Services - DishGennie | AI Recipe Features{% endblock %}
+
+{% block extra_css %}
+<style>
+    .services-hero {
+        background: linear-gradient(135deg, rgba(255, 107, 107, 0.95), rgba(78, 205, 196, 0.95)),
+                    url('https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=1200') center/cover;
+        color: white;
+        padding: 6rem 0 4rem;
+        text-align: center;
+    }
+    
+    .services-hero h1 {
+        font-size: 3rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+    
+    .section-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        color: #2c3e50;
+    }
+    
+    .section-subtitle {
+        font-size: 1.1rem;
+        color: #6c757d;
+        margin-bottom: 3rem;
+    }
+    
+    .service-card {
+        border: none;
+        border-radius: 20px;
+        transition: all 0.4s ease;
+        height: 100%;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        position: relative;
+    }
+    
+    .service-card:hover {
+        transform: translateY(-15px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+    
+    .service-icon-wrapper {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .service-card:hover .service-icon-wrapper {
+        transform: rotate(10deg) scale(1.1);
+    }
+    
+    .service-icon {
+        font-size: 2.5rem;
+        color: white;
+    }
+    
+    .service-card .card-body {
+        padding: 2.5rem 2rem;
+        text-align: center;
+    }
+    
+    .service-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        color: #2c3e50;
+    }
+    
+    .service-description {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+    
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin-bottom: 1.5rem;
+        text-align: left;
+    }
+    
+    .feature-list li {
+        padding: 0.5rem 0;
+        color: #495057;
+        position: relative;
+        padding-left: 1.8rem;
+    }
+    
+    .feature-list li:before {
+        content: "\F26B";
+        font-family: "bootstrap-icons";
+        position: absolute;
+        left: 0;
+        color: #ff6b6b;
+        font-weight: bold;
+    }
+    
+    .service-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: linear-gradient(135deg, #f093fb, #f5576c);
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .process-card {
+        text-align: center;
+        padding: 2rem;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        height: 100%;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .process-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .process-number {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin: 0 auto 1.5rem;
+    }
+    
+    .pricing-card {
+        border: 2px solid #e9ecef;
+        border-radius: 20px;
+        padding: 2.5rem 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        height: 100%;
+        background: white;
+    }
+    
+    .pricing-card:hover {
+        border-color: #ff6b6b;
+        transform: scale(1.05);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    }
+    
+    .pricing-card.featured {
+        border-color: #ff6b6b;
+        background: linear-gradient(135deg, rgba(255, 107, 107, 0.05), rgba(78, 205, 196, 0.05));
+        position: relative;
+    }
+    
+    .price-tag {
+        font-size: 3rem;
+        font-weight: bold;
+        color: #2c3e50;
+        margin: 1rem 0;
+    }
+    
+    .price-features {
+        list-style: none;
+        padding: 0;
+        margin: 2rem 0;
+    }
+    
+    .price-features li {
+        padding: 0.8rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .cta-box {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 4rem 2rem;
+        border-radius: 20px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="services-hero">
+    <div class="container">
+        <h1><i class="bi bi-gear-fill"></i> Our Services</h1>
+        <p class="lead">Discover powerful features that make cooking easier, smarter, and more enjoyable</p>
+    </div>
+</section>
+
+<!-- Main Services Section -->
+<section class="py-5 my-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">What We Offer</h2>
+            <p class="section-subtitle">Comprehensive solutions for all your cooking and meal planning needs</p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Service 1: AI Recipe Generator -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card service-card">
+                    <span class="service-badge">Most Popular</span>
+                    <div class="card-body">
+                        <div class="service-icon-wrapper">
+                            <i class="bi bi-stars service-icon"></i>
+                        </div>
+                        <h4 class="service-title">AI Recipe Generator</h4>
+                        <p class="service-description">Get instant, personalized recipe suggestions powered by advanced AI technology.</p>
+                        <ul class="feature-list">
+                            <li>Ingredient-based recipe matching</li>
+                            <li>Dietary preference customization</li>
+                            <li>Cuisine type selection</li>
+                            <li>Cooking time estimation</li>
+                            <li>Step-by-step instructions</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary-custom">Try Now</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Service 2: Meal Planner -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card service-card">
+                    <div class="card-body">
+                        <div class="service-icon-wrapper">
+                            <i class="bi bi-calendar-week service-icon"></i>
+                        </div>
+                        <h4 class="service-title">Smart Meal Planner</h4>
+                        <p class="service-description">Plan your weekly or monthly meals effortlessly with our intelligent planner.</p>
+                        <ul class="feature-list">
+                            <li>Weekly/monthly calendar view</li>
+                            <li>Automatic meal scheduling</li>
+                            <li>Nutritional balance tracking</li>
+                            <li>Family meal coordination</li>
+                            <li>Budget-friendly planning</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary-custom">Start Planning</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Service 3: Grocery List Generator -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card service-card">
+                    <span class="service-badge">Time Saver</span>
+                    <div class="card-body">
+                        <div class="service-icon-wrapper">
+                            <i class="bi bi-cart3 service-icon"></i>
+                        </div>
+                        <h4 class="service-title">Grocery List Generator</h4>
+                        <p class="service-description">Auto-generate organized shopping lists from your meal plans instantly.</p>
+                        <ul class="feature-list">
+                            <li>Category-wise grouping</li>
+                            <li>Quantity calculations</li>
+                            <li>Store aisle mapping</li>
+                            <li>Budget tracking</li>
+                            <li>Export & print options</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary-custom">Create List</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Service 4: Nutrition Tracking -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card service-card">
+                    <div class="card-body">
+                        <div class="service-icon-wrapper">
+                            <i class="bi bi-heart-pulse service-icon"></i>
+                        </div>
+                        <h4 class="service-title">Nutrition Tracking</h4>
+                        <p class="service-description">Monitor your daily nutritional intake with detailed macro and calorie tracking.</p>
+                        <ul class="feature-list">
+                            <li>Calorie counter</li>
+                            <li>Macro nutrient breakdown</li>
+                            <li>Vitamin & mineral tracking</li>
+                            <li>Health goal setting</li>
+                            <li>Progress visualization</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary-custom">Track Now</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Service 5: Recipe Collection -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card service-card">
+                    <div class="card-body">
+                        <div class="service-icon-wrapper">
+                            <i class="bi bi-book service-icon"></i>
+                        </div>
+                        <h4 class="service-title">Personal Recipe Collection</h4>
+                        <p class="service-description">Save, organize, and access your favorite recipes anytime, anywhere.</p>
+                        <ul class="feature-list">
+                            <li>Save favorite recipes</li>
+                            <li>Custom recipe categories</li>
+                            <li>Recipe notes & modifications</li>
+                            <li>Rating & review system</li>
+                            <li>Share with friends</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary-custom">View Collection</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Service 6: Cooking Tips & Guides -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card service-card">
+                    <div class="card-body">
+                        <div class="service-icon-wrapper">
+                            <i class="bi bi-lightbulb service-icon"></i>
+                        </div>
+                        <h4 class="service-title">Cooking Tips & Guides</h4>
+                        <p class="service-description">Access expert cooking techniques, tips, and tutorials to improve your skills.</p>
+                        <ul class="feature-list">
+                            <li>Video tutorials</li>
+                            <li>Cooking technique guides</li>
+                            <li>Kitchen equipment tips</li>
+                            <li>Food storage advice</li>
+                            <li>Ingredient substitutions</li>
+                        </ul>
+                        <a href="#" class="btn btn-primary-custom">Learn More</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-subtitle">Getting started is easy! Follow these simple steps</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="process-card">
+                    <div class="process-number">1</div>
+                    <h5 class="mb-3">Sign Up Free</h5>
+                    <p class="text-muted">Create your free account in seconds. No credit card required.</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="process-card">
+                    <div class="process-number">2</div>
+                    <h5 class="mb-3">Enter Preferences</h5>
+                    <p class="text-muted">Tell us your dietary preferences, cuisine choices, and cooking style.</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="process-card">
+                    <div class="process-number">3</div>
+                    <h5 class="mb-3">Generate Recipes</h5>
+                    <p class="text-muted">Get instant AI-powered recipe suggestions based on your inputs.</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="process-card">
+                    <div class="process-number">4</div>
+                    <h5 class="mb-3">Cook & Enjoy</h5>
+                    <p class="text-muted">Follow easy instructions and enjoy delicious home-cooked meals.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Section -->
+<section class="py-5 my-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Choose Your Plan</h2>
+            <p class="section-subtitle">Flexible pricing options to suit your needs</p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Free Plan -->
+            <div class="col-lg-4 col-md-6">
+                <div class="pricing-card">
+                    <h4>Free</h4>
+                    <div class="price-tag">₹0<span style="font-size: 1rem;">/month</span></div>
+                    <ul class="price-features">
+                        <li>10 recipes per month</li>
+                        <li>Basic meal planner</li>
+                        <li>Standard grocery lists</li>
+                        <li>Community support</li>
+                        <li>Mobile app access</li>
+                    </ul>
+                    <a href="{% url 'signup' %}" class="btn btn-outline-primary">Get Started</a>
+                </div>
+            </div>
+            
+            <!-- Premium Plan -->
+            <div class="col-lg-4 col-md-6">
+                <div class="pricing-card featured">
+                    <span class="service-badge">Most Popular</span>
+                    <h4>Premium</h4>
+                    <div class="price-tag">₹299<span style="font-size: 1rem;">/month</span></div>
+                    <ul class="price-features">
+                        <li>Unlimited recipes</li>
+                        <li>Advanced meal planner</li>
+                        <li>Smart grocery lists</li>
+                        <li>Nutrition tracking</li>
+                        <li>Priority support</li>
+                        <li>Ad-free experience</li>
+                    </ul>
+                    <a href="{% url 'signup' %}" class="btn btn-primary-custom">Upgrade Now</a>
+                </div>
+            </div>
+            
+            <!-- Family Plan -->
+            <div class="col-lg-4 col-md-6">
+                <div class="pricing-card">
+                    <h4>Family</h4>
+                    <div class="price-tag">₹499<span style="font-size: 1rem;">/month</span></div>
+                    <ul class="price-features">
+                        <li>Everything in Premium</li>
+                        <li>Up to 5 family members</li>
+                        <li>Shared meal plans</li>
+                        <li>Family nutrition insights</li>
+                        <li>Recipe collaboration</li>
+                        <li>Dedicated support</li>
+                    </ul>
+                    <a href="{% url 'signup' %}" class="btn btn-outline-primary">Choose Family</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Comparison -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Why Choose DishGennie?</h2>
+            <p class="section-subtitle">Compare our features with traditional cooking methods</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h5 class="mb-3"><i class="bi bi-x-circle text-danger"></i> Traditional Way</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="bi bi-dash-circle text-muted"></i> Hours spent searching recipes</li>
+                            <li class="mb-2"><i class="bi bi-dash-circle text-muted"></i> Disorganized meal planning</li>
+                            <li class="mb-2"><i class="bi bi-dash-circle text-muted"></i> Frequent grocery store trips</li>
+                            <li class="mb-2"><i class="bi bi-dash-circle text-muted"></i> Food waste from poor planning</li>
+                            <li class="mb-2"><i class="bi bi-dash-circle text-muted"></i> Limited recipe variety</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(255, 107, 107, 0.05), rgba(78, 205, 196, 0.05));">
+                    <div class="card-body p-4">
+                        <h5 class="mb-3"><i class="bi bi-check-circle text-success"></i> With DishGennie</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Instant AI-powered recipes</li>
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Organized weekly meal plans</li>
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Auto-generated shopping lists</li>
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Reduced food waste & costs</li>
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Unlimited recipe discovery</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="py-5 my-5">
+    <div class="container">
+        <div class="cta-box">
+            <h2 class="display-5 fw-bold mb-4">Ready to Transform Your Cooking Experience?</h2>
+            <p class="lead mb-4">Join thousands of home cooks who have simplified their meal planning with DishGennie</p>
+            <a href="{% url 'signup' %}" class="btn btn-light btn-lg me-3">
+                <i class="bi bi-rocket-takeoff"></i> Get Started Free
+            </a>
+            <a href="{% url 'contact' %}" class="btn btn-outline-light btn-lg">
+                <i class="bi bi-chat-dots"></i> Contact Sales
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

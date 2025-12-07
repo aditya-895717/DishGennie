@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DishGennie - AI Recipe Generator{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #ff6b35;
+            --secondary-color: #f7931e;
+            --dark-color: #2c3e50;
+            --light-color: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        /* Navbar Styles */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white !important;
+            display: flex;
+            align-items: center;
+        }
+        
+        .navbar-brand i {
+            margin-right: 10px;
+            font-size: 2rem;
+        }
+        
+        .nav-link {
+            color: white !important;
+            font-weight: 500;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-link:hover {
+            transform: translateY(-2px);
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: white;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .btn-login, .btn-signup {
+            padding: 8px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            margin-left: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-login {
+            background: white;
+            color: var(--primary-color);
+            border: 2px solid white;
+        }
+        
+        .btn-login:hover {
+            background: transparent;
+            color: white;
+        }
+        
+        .btn-signup {
+            background: var(--dark-color);
+            color: white;
+            border: 2px solid var(--dark-color);
+        }
+        
+        .btn-signup:hover {
+            background: white;
+            color: var(--dark-color);
+        }
+        
+        /* Profile Dropdown */
+        .profile-dropdown .dropdown-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            padding: 8px 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .profile-dropdown .dropdown-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .profile-pic-container {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin-right: 10px;
+            border: 2px solid white;
+        }
+        
+        .profile-pic {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .profile-initials {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--dark-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-right: 10px;
+        }
+        
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            border-radius: 10px;
+            margin-top: 10px;
+            min-width: 280px;
+        }
+        
+        .dropdown-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .dropdown-header strong {
+            font-size: 1.1rem;
+            color: var(--dark-color);
+        }
+        
+        .dropdown-header small {
+            color: #6c757d;
+        }
+        
+        .dropdown-item {
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .dropdown-item:hover {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+        
+        .dropdown-item i {
+            width: 25px;
+            margin-right: 10px;
+        }
+        
+        .dropdown-divider {
+            margin: 0.5rem 0;
+        }
+        
+        /* Admin Badge */
+        .admin-badge {
+            background: #ffc107;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        
+        .admin-menu-item {
+            background: rgba(255, 193, 7, 0.1);
+            font-weight: 600;
+        }
+        
+        .admin-menu-item:hover {
+            background: linear-gradient(135deg, #ffc107, #ff9800);
+            color: #000;
+        }
+
+        /* Main Content Area */
+        main {
+            flex: 1;
+        }
+
+        /* Footer Styles */
+        .footer-section {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: #ecf0f1;
+            margin-top: auto;
+        }
+
+        .footer-main {
+            padding: 60px 0 40px;
+        }
+
+        .footer-widget {
+            margin-bottom: 30px;
+        }
+
+        .footer-logo span {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .footer-description {
+            color: #bdc3c7;
+            line-height: 1.8;
+            font-size: 0.95rem;
+        }
+
+        .footer-title {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            position: relative;
+            padding-bottom: 12px;
+        }
+
+        .footer-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 2px;
+        }
+
+        .footer-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+
+        .footer-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+
+        .footer-links a i {
+            font-size: 0.7rem;
+            margin-right: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--secondary-color);
+            padding-left: 5px;
+        }
+
+        .footer-links a:hover i {
+            margin-right: 12px;
+        }
+
+        /* Social Links */
+        .social-links {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .social-link:hover {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
+            color: white;
+        }
+
+        /* Newsletter Form */
+        .newsletter-form .input-group {
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .newsletter-form .form-control {
+            border: none;
+            padding: 14px 20px;
+            background: white;
+            color: #2c3e50;
+        }
+
+        .newsletter-form .form-control:focus {
+            box-shadow: none;
+            background: white;
+        }
+
+        .btn-newsletter {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: white;
+            padding: 0 25px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-newsletter:hover {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            transform: scale(1.05);
+        }
+
+        /* Contact List */
+        .contact-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .contact-list li {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            color: #bdc3c7;
+            font-size: 0.9rem;
+        }
+
+        .contact-list i {
+            color: var(--secondary-color);
+            margin-right: 12px;
+            margin-top: 3px;
+            font-size: 1rem;
+            min-width: 20px;
+        }
+
+        .contact-list a {
+            color: #bdc3c7;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .contact-list a:hover {
+            color: var(--secondary-color);
+        }
+
+        /* Footer Bottom */
+        .footer-bottom {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 25px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .copyright-text {
+            color: #bdc3c7;
+            font-size: 0.9rem;
+        }
+
+        .footer-bottom-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-bottom-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .footer-bottom-links a:hover {
+            color: var(--secondary-color);
+        }
+
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 999;
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(255, 107, 53, 0.5);
+        }
+
+        .back-to-top.show {
+            display: flex;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 991px) {
+            .footer-main {
+                padding: 50px 0 30px;
+            }
+
+            .footer-title {
+                font-size: 1.1rem;
+                margin-bottom: 20px;
+            }
+
+            .footer-bottom-links {
+                justify-content: center;
+                margin-top: 10px;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .footer-main {
+                padding: 40px 0 20px;
+            }
+
+            .footer-widget {
+                margin-bottom: 40px;
+            }
+
+            .footer-description {
+                font-size: 0.9rem;
+            }
+
+            .social-links {
+                justify-content: center;
+            }
+
+            .back-to-top {
+                width: 45px;
+                height: 45px;
+                bottom: 20px;
+                right: 20px;
+            }
+
+            .footer-bottom {
+                padding: 20px 0;
+            }
+
+            .footer-bottom-links {
+                gap: 15px;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 575px) {
+            .footer-logo span {
+                font-size: 1.5rem;
+            }
+
+            .footer-title {
+                font-size: 1rem;
+            }
+
+            .footer-links a,
+            .contact-list li {
+                font-size: 0.85rem;
+            }
+
+            .newsletter-form .form-control {
+                padding: 12px 15px;
+                font-size: 0.9rem;
+            }
+
+            .btn-newsletter {
+                padding: 0 20px;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}">
+                <i class="fas fa-utensils"></i>
+                DishGennie
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'index' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'about' %}">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'service' %}">Services</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'contact' %}">Contact</a>
+                    </li>
+                    
+                    {% if user.is_authenticated %}
+                        <!-- User Profile Dropdown -->
+                        <li class="nav-item dropdown profile-dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" 
+                               role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                {% if user.userprofile.profile_picture %}
+                                    <div class="profile-pic-container">
+                                        <img src="{{ user.userprofile.profile_picture.url }}" alt="Profile" class="profile-pic">
+                                    </div>
+                                {% else %}
+                                    <div class="profile-initials">
+                                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                                    </div>
+                                {% endif %}
+                                <span>{{ user.first_name|default:user.username }}</span>
+                                {% if user.is_staff %}
+                                    <span class="admin-badge">ADMIN</span>
+                                {% endif %}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                                <li class="dropdown-header">
+                                    <strong>{{ user.get_full_name|default:user.username }}</strong><br>
+                                    <small>{{ user.email }}</small>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                
+                                {% if user.is_staff %}
+                                    <!-- Admin Section -->
+                                    <li>
+                                        <a class="dropdown-item admin-menu-item" href="{% url 'admin_dashboard' %}">
+                                            <i class="fas fa-tachometer-alt"></i>Admin Dashboard
+                                        </a>
+                                    </li>
+                                    {% if user.is_superuser %}
+                                    <li>
+                                        <a class="dropdown-item admin-menu-item" href="{% url 'admin_manage_users' %}">
+                                            <i class="fas fa-users-cog"></i>Manage Users
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    <li><hr class="dropdown-divider"></li>
+                                {% endif %}
+                                
+                                <!-- Regular User Menu Items -->
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-user"></i>My Profile
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-book"></i>My Recipes
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-calendar-alt"></i>Meal Planner
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-shopping-cart"></i>Grocery List
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-heart"></i>Favorites
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-cog"></i>Settings
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-question-circle"></i>Help & Support
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="{% url 'logout' %}">
+                                        <i class="fas fa-sign-out-alt"></i>Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <!-- Login/Signup Buttons -->
+                        <li class="nav-item">
+                            <a class="btn btn-login" href="{% url 'signin' %}">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-signup" href="{% url 'signup' %}">Sign Up</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages Alert -->
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="footer-section">
+        <!-- Main Footer -->
+        <div class="footer-main">
+            <div class="container">
+                <div class="row g-4">
+                    <!-- Company Info Column -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="footer-widget">
+                            <div class="footer-logo mb-4">
+                                <a href="{% url 'index' %}" class="d-flex align-items-center text-white text-decoration-none">
+                                    <i class="fas fa-utensils me-2" style="font-size: 2.5rem;"></i>
+                                    <span style="font-size: 1.8rem; font-weight: 700;">DishGennie</span>
+                                </a>
+                            </div>
+                            <p class="footer-description mb-4">
+                                Your AI-powered culinary companion. Discover delicious recipes, plan meals, 
+                                and make cooking easier with smart ingredients detection and personalized recommendations.
+                            </p>
+                            <div class="footer-social">
+                                <h6 class="mb-3">Follow Us</h6>
+                                <div class="social-links">
+                                    <a href="#" class="social-link" aria-label="Facebook">
+                                        <i class="fab fa-facebook-f"></i>
+                                    </a>
+                                    <a href="#" class="social-link" aria-label="Twitter">
+                                        <i class="fab fa-twitter"></i>
+                                    </a>
+                                    <a href="#" class="social-link" aria-label="Instagram">
+                                        <i class="fab fa-instagram"></i>
+                                    </a>
+                                    <a href="#" class="social-link" aria-label="YouTube">
+                                        <i class="fab fa-youtube"></i>
+                                    </a>
+                                    <a href="#" class="social-link" aria-label="Pinterest">
+                                        <i class="fab fa-pinterest"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Links Column -->
+                    <div class="col-lg-2 col-md-6 col-6">
+                        <div class="footer-widget">
+                            <h5 class="footer-title">Quick Links</h5>
+                            <ul class="footer-links">
+                                <li><a href="{% url 'index' %}"><i class="fas fa-chevron-right"></i>Home</a></li>
+                                <li><a href="{% url 'about' %}"><i class="fas fa-chevron-right"></i>About Us</a></li>
+                                <li><a href="{% url 'service' %}"><i class="fas fa-chevron-right"></i>Services</a></li>
+                                <li><a href="{% url 'contact' %}"><i class="fas fa-chevron-right"></i>Contact</a></li>
+                                <li><a href="#"><i class="fas fa-chevron-right"></i>Blog</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Features Column -->
+                    <div class="col-lg-2 col-md-6 col-6">
+                        <div class="footer-widget">
+                            <h5 class="footer-title">Features</h5>
+                            <ul class="footer-links">
+                                <li><a href="#"><i class="fas fa-chevron-right"></i>Recipe Generator</a></li>
+                                <li><a href="#"><i class="fas fa-chevron-right"></i>Meal Planner</a></li>
+                                <li><a href="#"><i class="fas fa-chevron-right"></i>Grocery List</a></li>
+                                <li><a href="#"><i class="fas fa-chevron-right"></i>Ingredient Scanner</a></li>
+                                <li><a href="#"><i class="fas fa-chevron-right"></i>Favorites</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Newsletter Column -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="footer-widget">
+                            <h5 class="footer-title">Newsletter</h5>
+                            <p class="mb-3">Subscribe to get weekly recipes and cooking tips!</p>
+                            <form id="footerNewsletterForm" class="newsletter-form" method="POST">
+                                {% csrf_token %}
+                                <div class="input-group mb-3">
+                                    <input type="email" 
+                                           class="form-control" 
+                                           placeholder="Your email address" 
+                                           id="newsletterEmail"
+                                           name="email"
+                                           required
+                                           aria-label="Email address">
+                                    <button class="btn btn-newsletter" type="submit">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                                <div id="newsletterMessage" style="display: none;" class="alert alert-sm"></div>
+                            </form>
+                            <div class="footer-contact mt-4">
+                                <h6 class="mb-3">Contact Info</h6>
+                                <ul class="contact-list">
+                                    <li>
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span>123 Recipe Street, Food City, FC 12345</span>
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-phone-alt"></i>
+                                        <a href="tel:+1234567890">+1 (234) 567-890</a>
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-envelope"></i>
+                                        <a href="mailto:info@dishgennie.com">info@dishgennie.com</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Bottom -->
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                        <p class="copyright-text mb-0">
+                            © 2025 <strong>DishGennie</strong>. All Rights Reserved.
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="footer-bottom-links">
+                            <li><a href="#">Privacy Policy</a></li>
+                            <li><a href="#">Terms & Conditions</a></li>
+                            <li><a href="#">Cookie Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back to Top Button -->
+        <button id="backToTop" class="back-to-top" aria-label="Back to top">
+            <i class="fas fa-chevron-up"></i>
+        </button>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Footer JavaScript -->
+    <script>
+        // Get CSRF token from cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Back to Top Button
+        const backToTopBtn = document.getElementById('backToTop');
+        
+        if (backToTopBtn) {
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    backToTopBtn.classList.add('show');
+                } else {
+                    backToTopBtn.classList.remove('show');
+                }
+            });
+            
+            backToTopBtn.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        }
+
+        // Footer Newsletter Form Submission
+        const newsletterForm = document.getElementById('footerNewsletterForm');
+        if (newsletterForm) {
+            newsletterForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const emailInput = document.getElementById('newsletterEmail');
+                const email = emailInput.value.trim();
+                const messageDiv = document.getElementById('newsletterMessage');
+                const csrftoken = getCookie('csrftoken');
+                
+                // Disable submit button
+                const submitBtn = this.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                
+                // Create FormData
+                const formData = new FormData();
+                formData.append('email', email);
+                
+                fetch("{% url 'subscribe_newsletter' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    messageDiv.style.display = 'block';
+                    if (data.success) {
+                        messageDiv.className = 'alert alert-success alert-sm mt-2';
+                        messageDiv.textContent = data.message || 'Thank you for subscribing!';
+                        emailInput.value = '';
+                    } else {
+                        messageDiv.className = 'alert alert-warning alert-sm mt-2';
+                        messageDiv.textContent = data.message || 'An error occurred. Please try again.';
+                    }
+                    
+                    // Hide message after 5 seconds
+                    setTimeout(() => {
+                        messageDiv.style.display = 'none';
+                    }, 5000);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    messageDiv.style.display = 'block';
+                    messageDiv.className = 'alert alert-danger alert-sm mt-2';
+                    messageDiv.textContent = 'An error occurred. Please try again.';
+                })
+                .finally(() => {
+                    // Re-enable submit button
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                });
+            });
+        }
+
+        // Animate on Scroll for Footer (Optional)
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.footer-widget').forEach(widget => {
+            widget.style.opacity = '0';
+            widget.style.transform = 'translateY(30px)';
+            widget.style.transition = 'all 0.6s ease';
+            observer.observe(widget);
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

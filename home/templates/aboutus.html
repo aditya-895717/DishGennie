@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+
+{% block title %} Dishgennie {% endblock %}
+
+{% block extra_css %}
+<style>
+    .about-hero {
+        background: linear-gradient(135deg, rgba(255, 107, 107, 0.95), rgba(78, 205, 196, 0.95)),
+                    url('https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=1200') center/cover;
+        color: white;
+        padding: 6rem 0 4rem;
+        text-align: center;
+    }
+    
+    .about-hero h1 {
+        font-size: 3rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+    
+    .section-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        color: #2c3e50;
+    }
+    
+    .section-subtitle {
+        font-size: 1.1rem;
+        color: #6c757d;
+        margin-bottom: 3rem;
+    }
+    
+    .team-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        height: 100%;
+    }
+    
+    .team-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    }
+    
+    .team-img {
+        width: 100%;
+        height: 280px;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    .team-card:hover .team-img {
+        transform: scale(1.1);
+    }
+    
+    .team-card .card-body {
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .team-name {
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin-bottom: 0.3rem;
+        color: #2c3e50;
+    }
+    
+    .team-role {
+        color: #ff6b6b;
+        font-weight: 600;
+        margin-bottom: 0.8rem;
+    }
+    
+    .team-bio {
+        font-size: 0.95rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+    
+    .social-links a {
+        display: inline-block;
+        width: 35px;
+        height: 35px;
+        line-height: 35px;
+        text-align: center;
+        border-radius: 50%;
+        background: #f8f9fa;
+        color: #2c3e50;
+        margin: 0 0.2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .social-links a:hover {
+        background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+        color: white;
+        transform: translateY(-3px);
+    }
+    
+    .value-card {
+        text-align: center;
+        padding: 2rem;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .value-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .value-icon {
+        font-size: 3rem;
+        background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+    }
+    
+    .timeline {
+        position: relative;
+        padding: 2rem 0;
+    }
+    
+    .timeline-item {
+        padding: 1.5rem;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+        position: relative;
+    }
+    
+    .timeline-year {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #ff6b6b;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stats-box {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 15px;
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="about-hero">
+    <div class="container">
+        <h1><i class="bi bi-people-fill"></i> About DishGennie</h1>
+        <p class="lead">Revolutionizing home cooking with AI-powered recipe generation</p>
+    </div>
+</section>
+
+<!-- Our Story Section -->
+<section class="py-5 my-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h2 class="section-title">Our Story</h2>
+                <p class="lead mb-4">DishGennie was born from a simple idea: make cooking accessible, enjoyable, and stress-free for everyone.</p>
+                <p>In 2025, our team of food enthusiasts and tech innovators came together to solve a common problem—what to cook with limited ingredients and time. We leveraged cutting-edge AI technology to create an intelligent recipe generator that understands your needs and preferences.</p>
+                <p>Today, DishGennie serves thousands of home cooks worldwide, helping them discover new recipes, plan meals efficiently, and reduce food waste. Our mission is to make every meal an opportunity for creativity and joy.</p>
+            </div>
+            <div class="col-lg-6">
+                <img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800" alt="Cooking" class="img-fluid rounded shadow">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Mission & Vision Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="bi bi-bullseye"></i>
+                    </div>
+                    <h3>Our Mission</h3>
+                    <p>To empower home cooks with intelligent tools that make meal planning, recipe discovery, and cooking an effortless and delightful experience.</p>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="bi bi-eye"></i>
+                    </div>
+                    <h3>Our Vision</h3>
+                    <p>To become the world's most trusted AI-powered culinary companion, inspiring millions to cook confidently and sustainably every day.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Core Values Section -->
+<section class="py-5 my-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Our Core Values</h2>
+            <p class="section-subtitle">The principles that guide everything we do</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="bi bi-lightbulb"></i>
+                    </div>
+                    <h5>Innovation</h5>
+                    <p>Pushing boundaries with AI to reimagine cooking</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="bi bi-heart"></i>
+                    </div>
+                    <h5>Passion</h5>
+                    <p>Driven by love for food and technology</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h5>Quality</h5>
+                    <p>Delivering reliable and tested solutions</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="bi bi-globe"></i>
+                    </div>
+                    <h5>Sustainability</h5>
+                    <p>Promoting mindful cooking and reducing waste</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Team Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Meet Our Team</h2>
+            <p class="section-subtitle">The passionate people behind DishGennie</p>
+        </div>
+        
+        <div class="row">
+            <!-- Team Member 1 -->
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card team-card">
+                    <div style="overflow: hidden;">
+                        <img src="https://i.pravatar.cc/400?img=12" alt="Aditya Dubey" class="team-img">
+                    </div>
+                    <div class="card-body">
+                        <h5 class="team-name">Aditya Dubey</h5>
+                        <p class="team-role">Lead Developer</p>
+                        <p class="team-bio">Full-stack developer passionate about building innovative web solutions with Django and AI.</p>
+                        <div class="social-links">
+                            <a href="#"><i class="bi bi-linkedin"></i></a>
+                            <a href="#"><i class="bi bi-github"></i></a>
+                            <a href="#"><i class="bi bi-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Team Member 2 -->
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card team-card">
+                    <div style="overflow: hidden;">
+                        <img src="https://i.pravatar.cc/400?img=33" alt="Sonu Patel" class="team-img">
+                    </div>
+                    <div class="card-body">
+                        <h5 class="team-name">Sonu Patel</h5>
+                        <p class="team-role">AI/ML Engineer</p>
+                        <p class="team-bio">Specializes in natural language processing and machine learning model development.</p>
+                        <div class="social-links">
+                            <a href="#"><i class="bi bi-linkedin"></i></a>
+                            <a href="#"><i class="bi bi-github"></i></a>
+                            <a href="#"><i class="bi bi-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Team Member 3 -->
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card team-card">
+                    <div style="overflow: hidden;">
+                        <img src="https://i.pravatar.cc/400?img=15" alt="Ashutosh Shakya" class="team-img">
+                    </div>
+                    <div class="card-body">
+                        <h5 class="team-name">Ashutosh Shakya</h5>
+                        <p class="team-role">Frontend Developer</p>
+                        <p class="team-bio">Creates beautiful and responsive user interfaces with Bootstrap and modern JavaScript.</p>
+                        <div class="social-links">
+                            <a href="#"><i class="bi bi-linkedin"></i></a>
+                            <a href="#"><i class="bi bi-github"></i></a>
+                            <a href="#"><i class="bi bi-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Team Member 4 -->
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card team-card">
+                    <div style="overflow: hidden;">
+                        <img src="https://i.pravatar.cc/400?img=17" alt="Alok Vikram" class="team-img">
+                    </div>
+                    <div class="card-body">
+                        <h5 class="team-name">Alok Vikram</h5>
+                        <p class="team-role">Backend Developer</p>
+                        <p class="team-bio">Expert in database design, API development, and server-side optimization.</p>
+                        <div class="social-links">
+                            <a href="#"><i class="bi bi-linkedin"></i></a>
+                            <a href="#"><i class="bi bi-github"></i></a>
+                            <a href="#"><i class="bi bi-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Journey/Timeline Section -->
+<section class="py-5 my-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Our Journey</h2>
+            <p class="section-subtitle">Key milestones in our story</p>
+        </div>
+        
+        <div class="timeline">
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="timeline-item">
+                        <div class="timeline-year">2025 - Q1</div>
+                        <h5>Project Inception</h5>
+                        <p>DishGennie was conceived as a college project with a vision to solve real-world cooking challenges.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="timeline-item">
+                        <div class="timeline-year">2025 - Q2</div>
+                        <h5>AI Integration</h5>
+                        <p>Successfully integrated Perplexity AI API for intelligent recipe generation and recommendations.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="timeline-item">
+                        <div class="timeline-year">2025 - Q3</div>
+                        <h5>Feature Expansion</h5>
+                        <p>Added meal planner, grocery list generator, and nutritional tracking capabilities.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="timeline-item">
+                        <div class="timeline-year">2025 - Q4</div>
+                        <h5>Growing Community</h5>
+                        <p>Reached 10,000+ active users and generated over 50,000 personalized recipes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="stats-box">
+            <div class="row">
+                <div class="col-md-3 col-6 mb-4 mb-md-0">
+                    <div class="stat-number">10K+</div>
+                    <p>Active Users</p>
+                </div>
+                <div class="col-md-3 col-6 mb-4 mb-md-0">
+                    <div class="stat-number">50K+</div>
+                    <p>Recipes Generated</p>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-number">4.9/5</div>
+                    <p>User Rating</p>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-number">95%</div>
+                    <p>Satisfaction Rate</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="py-5 my-5">
+    <div class="container text-center">
+        <h2 class="section-title mb-4">Join Our Culinary Revolution</h2>
+        <p class="lead mb-4">Start creating delicious meals with AI-powered recipe suggestions today</p>
+        <a href="#" class="btn btn-primary-custom btn-lg">
+            <i class="bi bi-rocket-takeoff"></i> Get Started Now
+        </a>
+    </div>
+</section>
+{% endblock %}

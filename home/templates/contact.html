@@ -1,0 +1,684 @@
+{% extends 'base.html' %}
+
+{% block title %}Contact Us - DishGennie{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Animated gradient background */
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.contact-hero {
+    background: linear-gradient(-45deg, #FF6B6B, #4ECDC4, #45B7D1, #764ba2);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+    color: white;
+    padding: 5rem 0 4rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.contact-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.1);
+}
+
+.contact-hero .container {
+    position: relative;
+    z-index: 1;
+}
+
+.contact-hero h1 {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    animation: fadeInDown 1s ease;
+}
+
+.contact-hero p {
+    font-size: 1.2rem;
+    animation: fadeInUp 1s ease;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.contact-section {
+    padding: 4rem 0;
+    background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.contact-info-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    margin-bottom: 2rem;
+    transition: all 0.4s ease;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.contact-info-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+.contact-info-card:hover::before {
+    left: 100%;
+}
+
+.contact-info-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(255,107,107,0.2);
+    border-color: #FF6B6B;
+}
+
+.contact-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2.2rem;
+    color: white;
+    box-shadow: 0 10px 25px rgba(255,107,107,0.3);
+    transition: all 0.3s ease;
+}
+
+.contact-info-card:hover .contact-icon {
+    transform: rotateY(360deg) scale(1.1);
+}
+
+.contact-info-card h4 {
+    font-weight: bold;
+    margin-bottom: 1rem;
+    color: #2c3e50;
+}
+
+.contact-info-card p {
+    color: #6c757d;
+    margin-bottom: 0;
+    line-height: 1.8;
+}
+
+.contact-form-container {
+    background: white;
+    border-radius: 25px;
+    padding: 3rem;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+.contact-form-container h3 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.contact-form-container .subtitle {
+    color: #6c757d;
+    margin-bottom: 2rem;
+}
+
+.form-floating {
+    margin-bottom: 1.5rem;
+}
+
+.form-control, .form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #FF6B6B;
+    box-shadow: 0 0 0 0.3rem rgba(255, 107, 107, 0.15);
+    transform: translateY(-2px);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.input-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #FF6B6B;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.form-control:focus ~ .input-icon {
+    opacity: 1;
+}
+
+.btn-contact {
+    background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);
+    border: none;
+    padding: 15px 50px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(255,107,107,0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-contact::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-contact:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-contact:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(255,107,107,0.4);
+}
+
+.map-container {
+    background: white;
+    border-radius: 25px;
+    overflow: hidden;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+    margin-top: 2rem;
+    border: 3px solid #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.map-container:hover {
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    border-color: #FF6B6B;
+}
+
+.map-container iframe {
+    width: 100%;
+    height: 450px;
+    border: none;
+}
+
+.social-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 3rem;
+    border-radius: 25px;
+    text-align: center;
+    color: white;
+    margin-top: 2rem;
+    box-shadow: 0 15px 40px rgba(102,126,234,0.3);
+}
+
+.social-section h5 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    font-weight: bold;
+}
+
+.social-links {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.social-link {
+    width: 60px;
+    height: 60px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #667eea;
+    font-size: 1.8rem;
+    transition: all 0.4s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.social-link:hover {
+    background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);
+    color: white;
+    transform: translateY(-10px) rotate(360deg);
+    box-shadow: 0 15px 30px rgba(255,107,107,0.4);
+}
+
+.success-message {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 15px;
+    margin-top: 2rem;
+    animation: slideIn 0.5s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.stats-section {
+    background: white;
+    padding: 3rem;
+    border-radius: 25px;
+    margin-top: 3rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #FF6B6B;
+    display: block;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.faq-section {
+    margin-top: 3rem;
+}
+
+.faq-item {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.faq-item:hover {
+    box-shadow: 0 10px 25px rgba(255,107,107,0.2);
+    transform: translateX(10px);
+}
+
+.faq-question {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.faq-answer {
+    color: #6c757d;
+    display: none;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 2px solid #f8f9fa;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .contact-hero h1 {
+        font-size: 2rem;
+    }
+    
+    .contact-hero p {
+        font-size: 1rem;
+    }
+    
+    .contact-form-container {
+        padding: 2rem;
+    }
+    
+    .map-container iframe {
+        height: 300px;
+    }
+    
+    .contact-icon {
+        width: 70px;
+        height: 70px;
+        font-size: 1.8rem;
+    }
+    
+    .btn-contact {
+        width: 100%;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Animated Hero Section -->
+<section class="contact-hero">
+    <div class="container">
+        <h1>💬 Let's Connect!</h1>
+        <p class="lead">We're here to help! Share your thoughts, questions, or feedback with us.</p>
+    </div>
+</section>
+
+<!-- Contact Information Cards -->
+<section class="contact-section">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-md-4">
+                <div class="contact-info-card text-center">
+                    <div class="contact-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <h4>Visit Us</h4>
+                    <p><strong>DishGennie HQ</strong><br>
+                    Bhainsamau, Lucknow<br>
+                    Near SSK Hotel<br>
+                    India</p>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="contact-info-card text-center">
+                    <div class="contact-icon">
+                        <i class="fas fa-phone-alt"></i>
+                    </div>
+                    <h4>Call Us</h4>
+                    <p><strong>+91 8957170537</strong><br>
+                    Mon - Fri: 9AM - 6PM<br>
+                    Sat: 10AM - 4PM<br>
+                    <small>Sunday Closed</small></p>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="contact-info-card text-center">
+                    <div class="contact-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h4>Email Us</h4>
+                    <p><strong>supportdishgennie@gmail.com</strong><br>
+                    dishgennie.com<br>
+                    24-hour response time<br>
+                    <small>We're always listening!</small></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats-section">
+            <div class="row">
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <span class="stat-number">10K+</span>
+                        <span class="stat-label">Happy Customers</span>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <span class="stat-number">24/7</span>
+                        <span class="stat-label">Support Available</span>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <span class="stat-number">99%</span>
+                        <span class="stat-label">Satisfaction Rate</span>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <span class="stat-number">&lt;2hrs</span>
+                        <span class="stat-label">Avg Response Time</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Form and Map -->
+        <div class="row mt-5">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="contact-form-container">
+                    <h3 class="fw-bold">Send Us a Message 📧</h3>
+                    <p class="subtitle">Fill out the form below and we'll get back to you shortly!</p>
+                    
+                    <form method="POST" action="{% url 'contact' %}" id="contactForm">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="first_name" class="form-label">First Name *</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" 
+                                       placeholder="John" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" 
+                                       placeholder="Doe" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address *</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   placeholder="john.doe@example.com" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   placeholder="+91 12345 67890">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">What can we help you with? *</label>
+                            <select class="form-select" id="subject" name="subject" required>
+                                <option value="">Choose a topic...</option>
+                                <option value="general">💬 General Inquiry</option>
+                                <option value="support">🛠️ Technical Support</option>
+                                <option value="feedback">⭐ Feedback & Suggestions</option>
+                                <option value="partnership">🤝 Partnership Opportunity</option>
+                                <option value="recipes">🍽️ Recipe Request</option>
+                                <option value="other">📝 Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="message" class="form-label">Your Message *</label>
+                            <textarea class="form-control" id="message" name="message" rows="5" 
+                                      placeholder="Tell us more about how we can help you..." required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-contact w-100">
+                            <i class="fas fa-paper-plane me-2"></i>Send Message
+                        </button>
+                    </form>
+
+                    <!-- Success Message -->
+                    <div id="successMessage" class="success-message d-none">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Thank you!</strong> Your message has been sent successfully. We'll get back to you soon!
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <!-- Map Container -->
+                <div class="map-container">
+                    <iframe 
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3782.2547817388264!2d73.8567437!3d18.5204303!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bc2c0703b7e1f8b%3A0x3e09f29d2e0e9d6e!2sPune%2C%20Maharashtra!5e0!3m2!1sen!2sin!4v1234567890"
+                        allowfullscreen="" 
+                        loading="lazy" 
+                        referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
+
+                <!-- Social Media Section -->
+                <div class="social-section">
+                    <h5>🌟 Follow Us on Social Media</h5>
+                    <p class="mb-4">Stay connected for recipes, tips, and updates!</p>
+                    <div class="social-links">
+                        <a href="#" class="social-link" title="Facebook" target="_blank">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="social-link" title="Twitter" target="_blank">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="social-link" title="Instagram" target="_blank">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="social-link" title="LinkedIn" target="_blank">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        <a href="#" class="social-link" title="YouTube" target="_blank">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                        <a href="#" class="social-link" title="Pinterest" target="_blank">
+                            <i class="fab fa-pinterest-p"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="faq-section">
+            <h3 class="text-center mb-4 fw-bold">Frequently Asked Questions</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="faq-item" onclick="toggleFAQ(this)">
+                        <div class="faq-question">
+                            <i class="fas fa-question-circle me-2"></i>How quickly will I get a response?
+                        </div>
+                        <div class="faq-answer">
+                            We typically respond within 2 hours during business hours and within 24 hours on weekends.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="faq-item" onclick="toggleFAQ(this)">
+                        <div class="faq-question">
+                            <i class="fas fa-question-circle me-2"></i>Can I request custom recipes?
+                        </div>
+                        <div class="faq-answer">
+                            Absolutely! Use the "Recipe Request" option in the subject dropdown and tell us what you're looking for.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+// Form submission with animation
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const form = this;
+    const successMsg = document.getElementById('successMessage');
+    const submitBtn = form.querySelector('.btn-contact');
+    
+    // Disable button and show loading
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+    submitBtn.disabled = true;
+    
+    // Simulate form submission (replace with actual AJAX call)
+    setTimeout(() => {
+        successMsg.classList.remove('d-none');
+        form.reset();
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Send Message';
+        submitBtn.disabled = false;
+        
+        // Hide success message after 5 seconds
+        setTimeout(() => {
+            successMsg.classList.add('d-none');
+        }, 5000);
+        
+        // Scroll to success message
+        successMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 1500);
+});
+
+// FAQ Toggle Function
+function toggleFAQ(element) {
+    const answer = element.querySelector('.faq-answer');
+    const isOpen = answer.style.display === 'block';
+    
+    // Close all FAQ answers
+    document.querySelectorAll('.faq-answer').forEach(a => a.style.display = 'none');
+    
+    // Toggle current answer
+    answer.style.display = isOpen ? 'none' : 'block';
+}
+
+// Input animation on focus
+document.querySelectorAll('.form-control, .form-select').forEach(input => {
+    input.addEventListener('focus', function() {
+        this.parentElement.style.transform = 'scale(1.02)';
+    });
+    
+    input.addEventListener('blur', function() {
+        this.parentElement.style.transform = 'scale(1)';
+    });
+});
+</script>
+{% endblock %}

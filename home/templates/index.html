@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+
+{% block title %} DishGennie {% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, rgba(255, 107, 107, 0.9), rgba(78, 205, 196, 0.9)),
+                    url('https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=1200') center/cover;
+        color: white;
+        padding: 8rem 0 6rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.1) 0%, transparent 60%);
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .hero-section h1 {
+        font-size: 3.5rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+        animation: fadeInUp 1s ease;
+    }
+    
+    .hero-section p {
+        font-size: 1.3rem;
+        margin-bottom: 2rem;
+        animation: fadeInUp 1.2s ease;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .feature-card {
+        border: none;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+        height: 100%;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    }
+    
+    .feature-icon {
+        font-size: 3rem;
+        background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+    }
+    
+    .stats-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 4rem 0;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 3rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .cta-section {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 5rem 0;
+        text-align: center;
+        margin-top: 4rem;
+    }
+    
+    .testimonial-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin: 1rem 0;
+    }
+    
+    .testimonial-img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #ff6b6b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container hero-content">
+        <h1><i class="bi bi-stars"></i> Welcome to DishGennie</h1>
+        <p class="lead">Transform your ingredients into culinary masterpieces with AI-powered recipe generation</p>
+        <div class="mt-4">
+            <a href="{% url 'signin' %}" class="btn btn-primary-custom btn-lg me-3">
+                <i class="bi bi-magic"></i> Generate Recipe Now
+            </a>
+            <a href="{% url 'service'%}" class="btn btn-outline-light btn-lg">
+                <i class="bi bi-play-circle"></i> Learn More
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5 my-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3">Why Choose DishGennie?</h2>
+            <p class="lead text-muted">Discover the features that make cooking easier and more enjoyable</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-lightbulb"></i>
+                        </div>
+                        <h4 class="card-title mb-3">Smart Recipe Suggestions</h4>
+                        <p class="card-text">Get personalized recipe recommendations based on your available ingredients and dietary preferences.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+                        <h4 class="card-title mb-3">Meal Planning Made Easy</h4>
+                        <p class="card-text">Plan your weekly meals effortlessly with our intuitive meal planner and nutritional tracking features.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-cart"></i>
+                        </div>
+                        <h4 class="card-title mb-3">Auto Grocery Lists</h4>
+                        <p class="card-text">Generate organized shopping lists automatically from your meal plans with category grouping and budget tracking.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row g-4 mt-3">
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-heart-pulse"></i>
+                        </div>
+                        <h4 class="card-title mb-3">Nutrition Tracking</h4>
+                        <p class="card-text">Monitor calories, macros, and nutritional values to maintain a balanced and healthy diet.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h4 class="card-title mb-3">Family Coordination</h4>
+                        <p class="card-text">Coordinate meals for the entire family with preferences and dietary restrictions in mind.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <h4 class="card-title mb-3">AI-Powered</h4>
+                        <p class="card-text">Leverage advanced AI technology to discover creative recipes and cooking techniques tailored to you.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number"><i class="bi bi-people-fill"></i> 10K+</div>
+                    <p>Happy Users</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number"><i class="bi bi-journal-bookmark"></i> 50K+</div>
+                    <p>Recipes Generated</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number"><i class="bi bi-star-fill"></i> 4.9</div>
+                    <p>Average Rating</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-number"><i class="bi bi-clock-history"></i> 24/7</div>
+                    <p>Available</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5 my-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3">How It Works</h2>
+            <p class="lead text-muted">Get started in three simple steps</p>
+        </div>
+        
+        <div class="row text-center">
+            <div class="col-md-4 mb-4">
+                <div class="mb-3">
+                    <span class="badge bg-primary rounded-circle p-3" style="font-size: 2rem; width: 80px; height: 80px; line-height: 50px;">1</span>
+                </div>
+                <h4>Enter Ingredients</h4>
+                <p class="text-muted">Tell us what you have in your kitchen or what you're craving</p>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="mb-3">
+                    <span class="badge bg-primary rounded-circle p-3" style="font-size: 2rem; width: 80px; height: 80px; line-height: 50px;">2</span>
+                </div>
+                <h4>AI Magic Happens</h4>
+                <p class="text-muted">Our AI analyzes and creates personalized recipe recommendations</p>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="mb-3">
+                    <span class="badge bg-primary rounded-circle p-3" style="font-size: 2rem; width: 80px; height: 80px; line-height: 50px;">3</span>
+                </div>
+                <h4>Cook & Enjoy</h4>
+                <p class="text-muted">Follow step-by-step instructions and enjoy your delicious meal</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3">What Our Users Say</h2>
+            <p class="lead text-muted">Join thousands of happy home cooks</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="https://i.pravatar.cc/150?img=1" alt="User" class="testimonial-img me-3">
+                        <div>
+                            <h6 class="mb-0">Rahul Sharma</h6>
+                            <small class="text-muted">Home Cook</small>
+                        </div>
+                    </div>
+                    <p>"DishGennie has completely transformed my cooking routine! The AI suggestions are spot-on."</p>
+                    <div class="text-warning">
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="https://i.pravatar.cc/150?img=5" alt="User" class="testimonial-img me-3">
+                        <div>
+                            <h6 class="mb-0">Priya Patel</h6>
+                            <small class="text-muted">Food Blogger</small>
+                        </div>
+                    </div>
+                    <p>"The meal planner feature saves me hours every week. Highly recommended for busy families!"</p>
+                    <div class="text-warning">
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="https://i.pravatar.cc/150?img=8" alt="User" class="testimonial-img me-3">
+                        <div>
+                            <h6 class="mb-0">Amit Kumar</h6>
+                            <small class="text-muted">Student</small>
+                        </div>
+                    </div>
+                    <p>"Perfect for students like me! Quick recipes with ingredients I already have. Love it!"</p>
+                    <div class="text-warning">
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-half"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="cta-section">
+    <div class="container">
+        <h2 class="display-4 fw-bold mb-4">Ready to Start Cooking?</h2>
+        <p class="lead mb-4">Join thousands of home cooks discovering delicious recipes every day</p>
+        <a href="#" class="btn btn-light btn-lg">
+            <i class="bi bi-rocket-takeoff"></i> Get Started Free
+        </a>
+    </div>
+</section>
+{% endblock %}
