@@ -24,19 +24,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-6p5^kl_=1&1*khtp$&8une(82gg#)n!kqmc4-l!bhpse%0-6^l"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-<<<<<<< HEAD
+
 ALLOWED_HOSTS = ["dishgennie.onrender.com"]
-=======
-ALLOWED_HOSTS = ['*']
->>>>>>> 46d48c23cc6a6e0a5e3105dca5f65609221a9b54
 
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'adityadubey1431@gmail.com'
-EMAIL_HOST_PASSWORD = 'qslb fopw jueu gzty'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'adityadubey1431@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'qslb fopw jueu gzty')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+
 # Application definition
 
 INSTALLED_APPS = [
