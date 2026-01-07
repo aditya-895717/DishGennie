@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,15 +26,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-6p5^kl_=1&1*khtp$&8une(82gg#)n!kqmc4-l!bhpse%0-6^l"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ["dishgennie.onrender.com"]
+ALLOWED_HOSTS = ["*"]
 
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'adityadubey1431@gmail.com'
-EMAIL_HOST_PASSWORD = 'qslb fopw jueu gzty'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND')
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS') == 'True'
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+
 
 # Application definition
 
