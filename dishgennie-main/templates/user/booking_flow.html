@@ -1,0 +1,156 @@
+{% extends "user/base_user.html" %}
+{% block page_title %}Book a Service{% endblock %}
+{% block content %}
+<div class="booking-stepper">
+<div class="booking-step active"><div class="booking-step-circle">1</div><div class="booking-step-label">Service</div></div>
+<div class="booking-step active"><div class="booking-step-circle">2</div><div class="booking-step-label">Schedule</div></div>
+<div class="booking-step active"><div class="booking-step-circle">3</div><div class="booking-step-label">Address</div></div>
+<div class="booking-step active"><div class="booking-step-circle">4</div><div class="booking-step-label">Confirm</div></div>
+</div>
+<div class="row justify-content-center"><div class="col-lg-8">
+{% if selected_maid_profile %}
+<div class="glass-card mb-4">
+<div class="d-flex align-items-center gap-3">
+<img src="https://ui-avatars.com/api/?name={{ selected_maid_profile.user.get_full_name|default:selected_maid_profile.user.username }}&background=0d9488&color=fff&size=100" class="rounded-3" width="56" height="56" alt="Selected maid">
+<div>
+<div class="small text-muted">Selected maid</div>
+<h5 class="mb-0 fw-bold">{{ selected_maid_profile.user.get_full_name|default:selected_maid_profile.user.username }}</h5>
+</div>
+<a href="{% url 'find-maid' %}" class="btn-premium-outline btn-premium-sm ms-auto"><i class="bi bi-arrow-left"></i> Change</a>
+</div>
+</div>
+{% endif %}
+
+<div class="glass-card mb-4">
+<h4 class="mb-3" style="font-weight:700"><i class="bi bi-grid me-2 text-primary"></i>Select Service</h4>
+<div class="row g-3" id="serviceOptions">
+{% for svc in services %}
+<div class="col-6 col-md-3">
+<button type="button" class="service-card booking-service-option p-3 text-center w-100" data-service-id="{{ svc.id }}" data-service-name="{{ svc.name }}" data-price="{{ svc.base_price }}" style="cursor:pointer;border:2px solid transparent;border-radius:var(--radius-md);background:#fff">
+<i class="bi {{ svc.icon }} d-block mb-2" style="font-size:1.8rem;color:var(--primary)"></i>
+<div class="fw-bold small">{{ svc.name }}</div>
+<div class="small text-muted">{{ svc.base_price|floatformat:0 }}/hr</div>
+</button>
+</div>
+{% empty %}
+<div class="col-12"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-grid"></i></div><h5 class="empty-state-title">No services available</h5><p class="empty-state-text">Add active service categories before creating a booking.</p></div></div>
+{% endfor %}
+</div>
+<div class="mt-3"><label class="dg-label">Duration (hours)</label><select class="dg-input" id="durationHours" style="max-width:200px"><option value="1">1 hour</option><option value="2" selected>2 hours</option><option value="3">3 hours</option><option value="4">4 hours</option><option value="8">Full Day (8 hrs)</option></select></div>
+</div>
+
+<div class="glass-card mb-4">
+<h4 class="mb-3" style="font-weight:700"><i class="bi bi-calendar me-2 text-primary"></i>Schedule</h4>
+<div class="row g-3">
+<div class="col-md-6"><label class="dg-label">Booking Type</label><select class="dg-input" id="bookingType"><option value="instant">Instant (ASAP)</option><option value="scheduled">Scheduled</option></select></div>
+<div class="col-md-3"><label class="dg-label">Date</label><input type="date" class="dg-input" id="bookDate"></div>
+<div class="col-md-3"><label class="dg-label">Time</label><input type="time" class="dg-input" id="bookTime"></div>
+</div>
+</div>
+
+<div class="glass-card mb-4">
+<h4 class="mb-3" style="font-weight:700"><i class="bi bi-geo-alt me-2 text-primary"></i>Your Address</h4>
+<textarea class="dg-input" rows="3" id="bookingAddress" placeholder="Enter your full address...">{{ user.address }}</textarea>
+<div class="mt-3"><label class="dg-label">Special Instructions (Optional)</label><textarea class="dg-input" rows="2" id="bookingInstructions" placeholder="Any specific requirements..."></textarea></div>
+</div>
+
+<div class="glass-card mb-4">
+<h4 class="mb-3" style="font-weight:700"><i class="bi bi-receipt me-2 text-primary"></i>Order Summary</h4>
+<div class="d-flex justify-content-between mb-2"><span id="summaryService">Select a service</span><span class="fw-bold" id="summarySubtotal">₹0</span></div>
+<div class="d-flex justify-content-between mb-2"><span>Platform Fee</span><span id="summaryFee">₹29</span></div>
+<hr>
+<div class="d-flex justify-content-between"><span class="fw-bold fs-5">Total</span><span class="fw-bold fs-5" style="color:var(--primary)" id="summaryTotal">₹29</span></div>
+</div>
+<button class="btn-premium btn-premium-lg w-100 justify-content-center" id="confirmBookingBtn"><i class="bi bi-check-circle-fill me-2"></i> Confirm Booking</button>
+</div></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const selectedMaidUserId = "{% if selected_maid_profile %}{{ selected_maid_profile.user_id }}{% endif %}";
+let selectedService = null;
+
+function updateSummary() {
+    const duration = Number(document.getElementById('durationHours').value || 1);
+    const basePrice = selectedService ? Number(selectedService.price) : 0;
+    const subtotal = basePrice * duration;
+    const fee = selectedService ? 29 : 0;
+    const total = subtotal + fee;
+
+    document.getElementById('summaryService').textContent = selectedService ? `${selectedService.name} x ${duration} hr${duration > 1 ? 's' : ''}` : 'Select a service';
+    document.getElementById('summarySubtotal').textContent = DG.formatCurrency(subtotal);
+    document.getElementById('summaryFee').textContent = DG.formatCurrency(fee);
+    document.getElementById('summaryTotal').textContent = DG.formatCurrency(total);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const serviceButtons = document.querySelectorAll('.booking-service-option');
+    serviceButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            serviceButtons.forEach(item => item.style.borderColor = 'transparent');
+            this.style.borderColor = 'var(--primary)';
+            selectedService = {
+                id: this.dataset.serviceId,
+                name: this.dataset.serviceName,
+                price: this.dataset.price,
+            };
+            updateSummary();
+        });
+    });
+    serviceButtons[0]?.click();
+
+    document.getElementById('durationHours').addEventListener('change', updateSummary);
+
+    document.getElementById('confirmBookingBtn').addEventListener('click', async function() {
+        if (!selectedService) {
+            DG.toast('Select a service', 'Choose the service you want to book.', 'warning');
+            return;
+        }
+
+        const address = document.getElementById('bookingAddress').value.trim();
+        if (!address) {
+            DG.toast('Address required', 'Please enter the service address.', 'warning');
+            return;
+        }
+
+        const bookingType = document.getElementById('bookingType').value;
+        const scheduledDate = document.getElementById('bookDate').value;
+        const scheduledTime = document.getElementById('bookTime').value;
+        if (bookingType === 'scheduled' && (!scheduledDate || !scheduledTime)) {
+            DG.toast('Schedule required', 'Please choose both date and time.', 'warning');
+            return;
+        }
+
+        const duration = Number(document.getElementById('durationHours').value || 1);
+        const totalAmount = (Number(selectedService.price) * duration) + 29;
+        const payload = {
+            service: selectedService.id,
+            booking_type: bookingType,
+            scheduled_date: scheduledDate || null,
+            scheduled_time: scheduledTime || null,
+            address,
+            duration_hours: duration,
+            total_amount: totalAmount,
+            special_instructions: document.getElementById('bookingInstructions').value.trim(),
+        };
+        if (selectedMaidUserId) payload.maid = selectedMaidUserId;
+
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating booking...';
+        const response = await DG.api('/bookings/', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+
+        if (response?.id) {
+            window.location.href = `/confirmation/?booking_id=${response.id}`;
+            return;
+        }
+
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i> Confirm Booking';
+        DG.toast('Booking failed', response?.error || 'Please check the booking details and try again.', 'error');
+    });
+});
+</script>
+{% endblock %}

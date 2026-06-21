@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're Offline — DishGennie</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 48px 32px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    }
+    .icon {
+      width: 72px;
+      height: 72px;
+      background: #f2f4f5;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+    }
+    .icon svg { width: 36px; height: 36px; }
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 12px;
+    }
+    p {
+      font-size: 15px;
+      color: #64748b;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #FF6B35, #FF8A00);
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 600;
+      padding: 12px 28px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 200ms;
+    }
+    .btn:hover { opacity: 0.88; }
+    .brand {
+      margin-top: 36px;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+    .brand strong { color: #FF6B35; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round">
+        <line x1="1" y1="1" x2="23" y2="23"/>
+        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+        <path d="M10.71 5.05A16 16 0 0 1 22.56 9"/>
+        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+        <line x1="12" y1="20" x2="12.01" y2="20"/>
+      </svg>
+    </div>
+
+    <h1>You're Offline</h1>
+    <p>
+      No internet connection detected.<br>
+      Please check your network and try again.
+    </p>
+
+    <button class="btn" onclick="window.location.reload()">Try Again</button>
+
+    <p class="brand">
+      <strong>DishGennie</strong> — Premium Maid Booking
+    </p>
+  </div>
+</body>
+</html>

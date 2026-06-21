@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load static %}
+{% block theme %}user{% endblock %}
+{% block body %}
+<div class="dg-app" data-theme="user">
+<div class="dg-sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+<!-- Sidebar -->
+<aside class="dg-sidebar" id="sidebar">
+<div class="dg-sidebar-brand">
+<div class="dg-sidebar-brand-icon"><i class="bi bi-house-heart"></i></div>
+<div class="dg-sidebar-brand-text">Dish<span>Gennie</span></div>
+</div>
+<nav class="dg-sidebar-nav">
+<div class="dg-nav-section"><div class="dg-nav-section-title">Main</div>
+<a href="{% url 'user-dashboard' %}" class="dg-nav-link {% block nav_home %}{% endblock %}"><i class="bi bi-grid"></i> Dashboard</a>
+<a href="{% url 'find-maid' %}" class="dg-nav-link {% block nav_find %}{% endblock %}"><i class="bi bi-search"></i> Find Maid</a>
+<a href="{% url 'my-bookings' %}" class="dg-nav-link {% block nav_bookings %}{% endblock %}"><i class="bi bi-calendar-check"></i> My Bookings</a>
+</div>
+<div class="dg-nav-section"><div class="dg-nav-section-title">Services</div>
+<a href="{% url 'wallet' %}" class="dg-nav-link {% block nav_wallet %}{% endblock %}"><i class="bi bi-wallet2"></i> Wallet</a>
+</div>
+<div class="dg-nav-section"><div class="dg-nav-section-title">Account</div>
+<a href="{% url 'support' %}" class="dg-nav-link {% block nav_support %}{% endblock %}"><i class="bi bi-headset"></i> Support</a>
+<a href="{% url 'user-profile' %}" class="dg-nav-link {% block nav_profile %}{% endblock %}"><i class="bi bi-person"></i> Profile</a>
+<form method="POST" action="{% url 'logout' %}" class="d-inline">
+{% csrf_token %}
+<button type="submit" class="dg-nav-link w-100 text-start border-0 bg-transparent" style="cursor:pointer"><i class="bi bi-box-arrow-left"></i> Logout</button>
+</form>
+</div>
+</nav>
+</aside>
+<!-- Main -->
+<main class="dg-main">
+<header class="dg-topbar">
+<div class="dg-topbar-left">
+<button class="dg-sidebar-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+<h1 class="dg-topbar-title">{% block page_title %}Dashboard{% endblock %}</h1>
+</div>
+<div class="dg-topbar-right">
+<button class="dg-topbar-btn" title="Notifications" id="notifBtn"><i class="bi bi-bell"></i><span class="notification-count" data-notification-count hidden>0</span></button>
+<form method="POST" action="{% url 'logout' %}" class="m-0">
+{% csrf_token %}
+<button type="submit" class="btn-premium-outline btn-premium-sm"><i class="bi bi-box-arrow-right"></i> Logout</button>
+</form>
+<img src="https://ui-avatars.com/api/?name={{ user.first_name|default:'U' }}+{{ user.last_name|default:'ser' }}&background=0d9488&color=fff&size=80" class="dg-topbar-avatar" alt="Avatar">
+</div>
+</header>
+<div class="dg-content">{% block content %}{% endblock %}</div>
+</main>
+</div>
+<script>function toggleSidebar(){document.getElementById('sidebar').classList.toggle('show');document.getElementById('sidebarOverlay').classList.toggle('show');}</script>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "user/base_user.html" %}
+{% block nav_home %}active{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<!-- Welcome Banner -->
+<div class="kpi-card kpi-card-gradient animate-fade-in-up" style="background:var(--gradient-hero);margin-bottom:24px;padding:32px">
+<div class="row align-items-center">
+<div class="col-lg-8">
+<h2 style="font-family:var(--font-display);font-weight:800;font-size:1.6rem;color:#fff;margin-bottom:8px">
+Good {% now "H" as hour %}{% if hour|add:"0" < 12 %}Morning{% elif hour|add:"0" < 17 %}Afternoon{% else %}Evening{% endif %}, {{ user.first_name|default:user.username }}! 👋
+</h2>
+<p style="color:rgba(255,255,255,.85);margin-bottom:16px;font-size:.95rem">Ready to book professional home help? Explore our services or check your upcoming bookings.</p>
+<div class="d-flex gap-2 flex-wrap">
+<a href="{% url 'find-maid' %}" class="btn-premium btn-premium-sm" style="background:rgba(255,255,255,.2);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.3)"><i class="bi bi-search me-1"></i> Find Maid</a>
+<a href="{% url 'my-bookings' %}" class="btn-premium btn-premium-sm" style="background:rgba(255,255,255,.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2)"><i class="bi bi-calendar-check me-1"></i> My Bookings</a>
+</div>
+</div>
+<div class="col-lg-4 text-end d-none d-lg-block">
+<i class="bi bi-house-heart" style="font-size:6rem;opacity:.15"></i>
+</div>
+</div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-1">
+<div class="kpi-card">
+<div class="kpi-card-icon teal"><i class="bi bi-calendar-check"></i></div>
+<div class="kpi-card-value" id="kpiBookings">0</div>
+<div class="kpi-card-label">Total Bookings</div>
+</div>
+</div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-2">
+<div class="kpi-card">
+<div class="kpi-card-icon emerald"><i class="bi bi-check-circle"></i></div>
+<div class="kpi-card-value" id="kpiCompleted">0</div>
+<div class="kpi-card-label">Completed</div>
+</div>
+</div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-3">
+<div class="kpi-card">
+<div class="kpi-card-icon amber"><i class="bi bi-clock"></i></div>
+<div class="kpi-card-value" id="kpiActive">0</div>
+<div class="kpi-card-label">Active</div>
+</div>
+</div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-4">
+<div class="kpi-card">
+<div class="kpi-card-icon violet"><i class="bi bi-wallet2"></i></div>
+<div class="kpi-card-value" id="kpiWallet">₹0</div>
+<div class="kpi-card-label">Wallet Balance</div>
+</div>
+</div>
+</div>
+
+<!-- Quick Services -->
+<div class="chart-card mb-4 animate-fade-in-up stagger-5">
+<div class="chart-card-header">
+<div class="chart-card-title">Quick Book a Service</div>
+<a href="{% url 'find-maid' %}" class="small fw-bold" style="color:var(--primary)">View All →</a>
+</div>
+<div class="row g-3">
+<div class="col-4 col-md-2"><a href="{% url 'find-maid' %}" class="text-center d-block text-decoration-none p-3 rounded-3 hover-lift" style="background:var(--gray-50)"><i class="bi bi-bucket d-block mb-2" style="font-size:1.6rem;color:var(--primary)"></i><span class="small fw-bold text-dark">Cleaning</span></a></div>
+<div class="col-4 col-md-2"><a href="{% url 'find-maid' %}" class="text-center d-block text-decoration-none p-3 rounded-3 hover-lift" style="background:var(--gray-50)"><i class="bi bi-fire d-block mb-2" style="font-size:1.6rem;color:var(--primary)"></i><span class="small fw-bold text-dark">Cooking</span></a></div>
+<div class="col-4 col-md-2"><a href="{% url 'find-maid' %}" class="text-center d-block text-decoration-none p-3 rounded-3 hover-lift" style="background:var(--gray-50)"><i class="bi bi-water d-block mb-2" style="font-size:1.6rem;color:var(--primary)"></i><span class="small fw-bold text-dark">Laundry</span></a></div>
+<div class="col-4 col-md-2"><a href="{% url 'find-maid' %}" class="text-center d-block text-decoration-none p-3 rounded-3 hover-lift" style="background:var(--gray-50)"><i class="bi bi-emoji-smile d-block mb-2" style="font-size:1.6rem;color:var(--primary)"></i><span class="small fw-bold text-dark">Baby Care</span></a></div>
+<div class="col-4 col-md-2"><a href="{% url 'find-maid' %}" class="text-center d-block text-decoration-none p-3 rounded-3 hover-lift" style="background:var(--gray-50)"><i class="bi bi-stars d-block mb-2" style="font-size:1.6rem;color:var(--primary)"></i><span class="small fw-bold text-dark">Deep Clean</span></a></div>
+<div class="col-4 col-md-2"><a href="{% url 'find-maid' %}" class="text-center d-block text-decoration-none p-3 rounded-3 hover-lift" style="background:var(--gray-50)"><i class="bi bi-house-gear d-block mb-2" style="font-size:1.6rem;color:var(--primary)"></i><span class="small fw-bold text-dark">All-in-One</span></a></div>
+</div>
+</div>
+
+<!-- Recent Bookings -->
+<div class="chart-card animate-fade-in-up stagger-6">
+<div class="chart-card-header">
+<div class="chart-card-title">Recent Bookings</div>
+<a href="{% url 'my-bookings' %}" class="small fw-bold" style="color:var(--primary)">View All →</a>
+</div>
+<div id="recentBookingsContainer">
+<div class="empty-state">
+<div class="empty-state-icon"><i class="bi bi-calendar-x"></i></div>
+<div class="empty-state-title">No bookings yet</div>
+<div class="empty-state-text">Book your first service to see your booking history here.</div>
+<a href="{% url 'find-maid' %}" class="btn-premium btn-premium-sm mt-3"><i class="bi bi-search me-1"></i> Find a Maid</a>
+</div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    // Fetch user bookings from API
+    try {
+        const data = await DG.api('/bookings/');
+        if (data && data.results) {
+            const bookings = data.results;
+            const total = bookings.length;
+            const completed = bookings.filter(b => b.status === 'completed').length;
+            const active = bookings.filter(b => ['pending','accepted','en_route','in_progress'].includes(b.status)).length;
+
+            document.getElementById('kpiBookings').textContent = total;
+            document.getElementById('kpiCompleted').textContent = completed;
+            document.getElementById('kpiActive').textContent = active;
+
+            // Show recent bookings
+            if (bookings.length > 0) {
+                const container = document.getElementById('recentBookingsContainer');
+                const recent = bookings.slice(0, 5);
+                container.innerHTML = recent.map(b => `
+                    <div class="d-flex align-items-center gap-3 p-3 mb-2 rounded-3" style="background:var(--gray-50)">
+                        <div style="width:42px;height:42px;border-radius:var(--radius-sm);background:var(--primary-50);display:flex;align-items:center;justify-content:center">
+                            <i class="bi bi-calendar-check" style="color:var(--primary)"></i>
+                        </div>
+                        <div class="flex-fill">
+                            <div class="fw-bold small">${b.service_name || 'Service'}</div>
+                            <div class="text-muted" style="font-size:.75rem">${DG.formatDate(b.created_at)}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold small">${DG.formatCurrency(b.final_amount)}</div>
+                            <span class="status-badge ${b.status}">${b.status.replace('_',' ')}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+    } catch(e) {
+        console.log('Dashboard data load:', e);
+    }
+
+    // Fetch wallet
+    try {
+        const wallet = await DG.api('/payments/wallet/');
+        if (wallet && wallet.balance) {
+            document.getElementById('kpiWallet').textContent = DG.formatCurrency(wallet.balance);
+        }
+    } catch(e) {}
+});
+</script>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "admin_panel/base_admin.html" %}
+{% block a_nav_set %}active{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block content %}
+<div class="row g-4">
+<div class="col-lg-6 animate-fade-in-up">
+<div class="chart-card mb-4"><div class="chart-card-title mb-3">Service Categories</div>
+<table class="dg-table"><thead><tr><th>Service</th><th>Base Price</th><th>Status</th></tr></thead><tbody id="serviceRows"><tr><td colspan="3" class="text-center text-muted py-4">Loading services...</td></tr></tbody></table>
+</div>
+<div class="chart-card"><div class="chart-card-title mb-3">Notification Broadcast</div>
+<form id="broadcastForm"><div class="mb-3"><label class="dg-label">Target</label><select class="dg-input" name="target"><option value="all">All Users</option><option value="customers">Customers Only</option><option value="maids">Maids Only</option></select></div>
+<div class="mb-3"><label class="dg-label">Title</label><input type="text" class="dg-input" name="title" placeholder="Notification title" required></div>
+<div class="mb-3"><label class="dg-label">Message</label><textarea class="dg-input" rows="3" name="message" placeholder="Notification message..." required></textarea></div>
+<button type="submit" class="btn-premium"><i class="bi bi-megaphone me-1"></i>Send Broadcast</button></form>
+</div>
+</div>
+<div class="col-lg-6 animate-fade-in-up stagger-1">
+<div class="chart-card mb-4"><div class="chart-card-title mb-3">Commission Settings</div>
+<form id="settingsForm"><div class="mb-3"><label class="dg-label">Platform Commission (%)</label><input type="number" class="dg-input" name="commission" value="15" style="max-width:150px"></div>
+<div class="mb-3"><label class="dg-label">Minimum Booking Amount (₹)</label><input type="number" class="dg-input" name="minimum" value="199" style="max-width:150px"></div>
+<div class="mb-3"><label class="dg-label">Cancellation Window (minutes)</label><input type="number" class="dg-input" name="cancel_window" value="5" style="max-width:150px"></div>
+<button type="submit" class="btn-premium"><i class="bi bi-check-circle me-1"></i>Save Settings</button></form>
+</div>
+<div class="chart-card mb-4"><div class="chart-card-title mb-3">City Management</div>
+<div class="d-flex flex-wrap gap-2 mb-3" id="cityBadges"></div>
+<div class="small text-muted">Cities are loaded from the active service-city catalog.</div>
+</div>
+<div class="chart-card"><div class="chart-card-title mb-3">Coupon Draft</div>
+<form id="couponForm"><div class="row g-2"><div class="col-6"><label class="dg-label">Code</label><input type="text" class="dg-input" name="code" placeholder="WELCOME100"></div><div class="col-6"><label class="dg-label">Discount</label><input type="text" class="dg-input" name="discount" placeholder="₹100 or 10%"></div></div>
+<div class="row g-2 mt-1"><div class="col-6"><label class="dg-label">Min Order</label><input type="number" class="dg-input" name="min_order" value="299"></div><div class="col-6"><label class="dg-label">Usage Limit</label><input type="number" class="dg-input" name="limit" value="100"></div></div>
+<button type="submit" class="btn-premium btn-premium-sm mt-3"><i class="bi bi-plus-circle me-1"></i>Save Draft</button></form>
+</div>
+</div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function getFormData(form){return Object.fromEntries(new FormData(form).entries());}
+function asList(data){return Array.isArray(data) ? data : (data?.results || []);}
+async function loadSettingsData(){
+const [services, cities] = await Promise.all([DG.api('/services/categories/'), DG.api('/services/cities/')]);
+const serviceList = asList(services);
+const cityList = asList(cities);
+document.getElementById('serviceRows').innerHTML = serviceList.length ? serviceList.map(s=>`<tr><td class="fw-bold small"><i class="bi bi-${s.icon || 'stars'} me-1"></i>${s.name}</td><td>${DG.formatCurrency(Number(s.base_price || 0))}</td><td><span class="status-badge ${s.is_active ? 'completed' : 'cancelled'}">${s.is_active ? 'Active' : 'Inactive'}</span></td></tr>`).join('') : '<tr><td colspan="3" class="text-center text-muted py-4">No services configured.</td></tr>';
+document.getElementById('cityBadges').innerHTML = cityList.map(c=>`<span class="badge p-2" style="background:var(--primary-50);color:var(--primary-700);font-size:.8rem">${c.name}, ${c.state}</span>`).join('') || '<span class="text-muted small">No active cities.</span>';
+const saved = JSON.parse(localStorage.getItem('dg_admin_settings') || '{}');
+Object.entries(saved).forEach(([k,v])=>{const el=document.querySelector(`[name="${k}"]`); if(el) el.value=v;});
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+loadSettingsData();
+document.getElementById('broadcastForm').addEventListener('submit', async e=>{
+e.preventDefault();
+const data = getFormData(e.target);
+const res = await DG.api('/notifications/broadcast/', {method:'POST', body:JSON.stringify(data)});
+if(res && !res.error){DG.toast('Broadcast sent', res.message, 'success'); e.target.reset();} else DG.toast('Broadcast failed', res?.error || 'Please try again.', 'error');
+});
+document.getElementById('settingsForm').addEventListener('submit', e=>{
+e.preventDefault(); localStorage.setItem('dg_admin_settings', JSON.stringify(getFormData(e.target))); DG.toast('Settings saved','Local admin defaults updated.','success');
+});
+document.getElementById('couponForm').addEventListener('submit', e=>{
+e.preventDefault(); localStorage.setItem('dg_coupon_draft', JSON.stringify(getFormData(e.target))); DG.toast('Coupon draft saved','Draft is stored for this admin browser.','success');
+});
+});
+</script>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "admin_panel/base_admin.html" %}
+{% block a_nav_pay %}active{% endblock %}
+{% block page_title %}Payments{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-1"><div class="kpi-card kpi-card-gradient" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)"><div class="kpi-card-icon"><i class="bi bi-currency-rupee"></i></div><div class="kpi-card-value" id="totalRevenue">₹0</div><div class="kpi-card-label">Total Revenue</div></div></div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-2"><div class="kpi-card"><div class="kpi-card-icon emerald"><i class="bi bi-cash-stack"></i></div><div class="kpi-card-value" id="monthlyRevenue">₹0</div><div class="kpi-card-label">This Month</div></div></div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-3"><div class="kpi-card"><div class="kpi-card-icon amber"><i class="bi bi-send"></i></div><div class="kpi-card-value" id="pendingPayouts">₹0</div><div class="kpi-card-label">Pending Payouts</div></div></div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-4"><div class="kpi-card"><div class="kpi-card-icon cyan"><i class="bi bi-receipt"></i></div><div class="kpi-card-value" id="paymentCount">0</div><div class="kpi-card-label">Transactions</div></div></div>
+</div>
+<div class="chart-card animate-fade-in-up stagger-5">
+<div class="chart-card-header"><div class="chart-card-title">Payment Transactions</div></div>
+<table class="dg-table"><thead><tr><th>ID</th><th>User</th><th>Booking</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th></tr></thead>
+<tbody id="paymentRows"><tr><td colspan="7" class="text-center text-muted py-4">Loading payments...</td></tr></tbody></table>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function badge(status){return `<span class="status-badge ${status === 'completed' ? 'completed' : status === 'pending' ? 'pending' : 'cancelled'}">${status}</span>`;}
+function asList(data){return Array.isArray(data) ? data : (data?.results || []);}
+async function loadPayments(){
+const [summary, list, dashboard] = await Promise.all([
+DG.api('/payments/admin/reports/'),
+DG.api('/payments/admin/list/'),
+DG.api('/admin-panel/dashboard/')
+]);
+document.getElementById('totalRevenue').textContent = DG.formatCurrency(Number(summary?.total_revenue || 0));
+document.getElementById('monthlyRevenue').textContent = DG.formatCurrency(Number(dashboard?.monthly_revenue || 0));
+document.getElementById('pendingPayouts').textContent = DG.formatCurrency(Number(summary?.pending_payouts || 0));
+document.getElementById('paymentCount').textContent = summary?.total_payments || 0;
+const rows = asList(list);
+document.getElementById('paymentRows').innerHTML = rows.length ? rows.map(p=>`
+<tr><td class="fw-bold small">PAY${p.id}</td><td class="small">${p.user_name || `User ${p.user}`}</td><td class="small">#${p.booking_code || p.booking}</td>
+<td class="fw-bold">${DG.formatCurrency(Number(p.amount || 0))}</td><td><span class="badge" style="background:rgba(79,70,229,.1);color:#4f46e5">${p.method}</span></td>
+<td>${badge(p.status)}</td><td class="small text-muted">${DG.formatDate(p.completed_at || p.created_at)}</td></tr>`).join('') : '<tr><td colspan="7" class="text-center text-muted py-4">No payment records yet.</td></tr>';
+}
+document.addEventListener('DOMContentLoaded', loadPayments);
+</script>
+{% endblock %}

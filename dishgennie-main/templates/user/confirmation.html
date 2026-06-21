@@ -1,0 +1,99 @@
+{% extends "user/base_user.html" %}
+{% block page_title %}Booking Confirmation{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-8">
+<div class="glass-card text-center mb-4">
+<div class="empty-state-icon mx-auto mb-3" style="background:var(--success-light);color:var(--success)"><i class="bi bi-check-circle-fill"></i></div>
+<h3 class="fw-bold mb-2">Booking Confirmed</h3>
+<p class="text-muted mb-0" id="confirmationSubtitle">Loading booking details...</p>
+</div>
+
+<div class="booking-card mb-4" id="confirmationCard">
+<div class="booking-card-header">
+<div>
+<div class="booking-card-id" id="bookingRef">Booking</div>
+<h5 class="mt-1 mb-1" style="font-size:1rem;font-weight:700" id="bookingService">Home Service</h5>
+<div class="small text-muted" id="bookingSchedule"><i class="bi bi-calendar me-1"></i>Loading...</div>
+</div>
+<span class="status-badge pending" id="bookingStatus">Pending</span>
+</div>
+<div class="d-flex align-items-center gap-3 mt-3 p-3 rounded-3" style="background:var(--gray-50)">
+<img id="maidAvatar" src="https://ui-avatars.com/api/?name=Maid&background=0d9488&color=fff&size=80" class="rounded-3" width="48" height="48" alt="Maid">
+<div class="text-start"><div class="fw-bold small" id="maidName">Finding maid</div><div class="text-muted" style="font-size:.78rem" id="bookingAddress">Address</div></div>
+<div class="ms-auto fw-bold" style="color:var(--primary)" id="bookingAmount">₹0</div>
+</div>
+<div class="d-flex gap-2 mt-3 flex-wrap">
+<a href="#" id="trackLink" class="btn-premium btn-premium-sm flex-fill justify-content-center"><i class="bi bi-geo-alt"></i> Track Maid</a>
+<button type="button" class="btn-premium-outline btn-premium-sm flex-fill justify-content-center" id="chatBtn"><i class="bi bi-chat"></i> Chat</button>
+<a href="{% url 'my-bookings' %}" class="btn-premium-outline btn-premium-sm flex-fill justify-content-center"><i class="bi bi-calendar-check"></i> My Bookings</a>
+</div>
+</div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const confirmationBookingId = "{{ booking_id }}";
+
+function statusLabel(status) {
+    return (status || '').replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function scheduledText(booking) {
+    if (booking.scheduled_date) {
+        const time = booking.scheduled_time ? `, ${booking.scheduled_time.slice(0, 5)}` : '';
+        return `${DG.formatDate(booking.scheduled_date)}${time}`;
+    }
+    return 'As soon as possible';
+}
+
+async function createChatTicket(bookingId, maidName) {
+    const message = window.prompt(`Message ${maidName} about this booking:`);
+    if (!message || !message.trim()) return;
+    const response = await DG.api('/support/tickets/', {
+        method: 'POST',
+        body: JSON.stringify({
+            booking: bookingId,
+            subject: `Chat for Booking #DG${String(bookingId).padStart(4, '0')}`,
+            description: message.trim(),
+            priority: 'medium',
+        }),
+    });
+    if (response?.error) {
+        DG.toast('Chat not sent', response.error, 'error');
+        return;
+    }
+    DG.toast('Message sent', 'Your chat request is linked to this booking.', 'success');
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    if (!confirmationBookingId) {
+        document.getElementById('confirmationSubtitle').textContent = 'No booking id was provided.';
+        return;
+    }
+
+    const booking = await DG.api(`/bookings/${confirmationBookingId}/`);
+    if (!booking || booking.error || !booking.id) {
+        document.getElementById('confirmationSubtitle').textContent = booking?.error || 'This booking could not be found for your account.';
+        document.getElementById('confirmationCard').style.display = 'none';
+        return;
+    }
+
+    const maidName = booking.maid_name || 'Finding maid';
+    document.getElementById('confirmationSubtitle').textContent = 'Your booking is ready. Track status, chat, or review it from My Bookings.';
+    document.getElementById('bookingRef').textContent = `Booking #DG${String(booking.id).padStart(4, '0')}`;
+    document.getElementById('bookingService').textContent = booking.service_name || 'Home Service';
+    document.getElementById('bookingSchedule').innerHTML = `<i class="bi bi-calendar me-1"></i>${scheduledText(booking)}`;
+    document.getElementById('bookingStatus').className = `status-badge ${booking.status}`;
+    document.getElementById('bookingStatus').textContent = statusLabel(booking.status);
+    document.getElementById('maidName').textContent = maidName;
+    document.getElementById('maidAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(maidName)}&background=0d9488&color=fff&size=80`;
+    document.getElementById('bookingAddress').textContent = booking.address || 'Address not provided';
+    document.getElementById('bookingAmount').textContent = DG.formatCurrency(booking.final_amount || booking.total_amount || 0);
+    document.getElementById('trackLink').href = `/live-tracking/${booking.id}/`;
+    document.getElementById('chatBtn').addEventListener('click', () => createChatTicket(booking.id, maidName));
+});
+</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Maid Registration{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/maid_register.css' %}">
+{% endblock %}
+{% block body %}
+<div class="auth-page" data-theme="maid">
+<div class="auth-left">
+<h1 class="animate-fade-in-up">Become a Partner</h1>
+<p class="animate-fade-in-up stagger-1">Join 10,000+ maid partners earning ₹25,000+ per month with DishGennie.</p>
+<ul class="benefit-list animate-fade-in-up stagger-2">
+<li><i class="bi bi-cash-stack"></i> Daily earnings, weekly payouts</li>
+<li><i class="bi bi-calendar-check"></i> Flexible working hours</li>
+<li><i class="bi bi-shield-check"></i> Insurance coverage</li>
+<li><i class="bi bi-graph-up-arrow"></i> Skill training & growth</li>
+</ul>
+</div>
+<div class="auth-right">
+<div class="auth-form-container animate-fade-in-up">
+<div class="auth-brand"><div class="auth-brand-icon"><i class="bi bi-briefcase"></i></div><h2>Dish<span>Gennie</span> Partner</h2></div>
+<h3 style="font-size:1.3rem;font-weight:700;margin-bottom:4px">Partner Registration</h3>
+<p style="color:var(--gray-500);font-size:.88rem;margin-bottom:20px">Fill in your details to start earning</p>
+
+{% if messages %}
+{% for message in messages %}
+<div class="dg-alert dg-alert-{% if message.tags == 'error' %}error{% else %}success{% endif %}">
+<i class="bi bi-{% if message.tags == 'error' %}exclamation-circle-fill{% else %}check-circle-fill{% endif %}"></i>
+{{ message }}
+</div>
+{% endfor %}
+{% endif %}
+
+<form class="auth-form" id="maidRegForm" method="POST" action="{% url 'maid-register' %}" enctype="multipart/form-data">
+{% csrf_token %}
+<div class="row g-2"><div class="col-6"><div class="form-floating"><input type="text" class="form-control" id="mFirstName" name="first_name" placeholder="First" required value="{{ form_data.first_name|default:'' }}"><label>First Name</label></div></div><div class="col-6"><div class="form-floating"><input type="text" class="form-control" id="mLastName" name="last_name" placeholder="Last" required value="{{ form_data.last_name|default:'' }}"><label>Last Name</label></div></div></div>
+<div class="form-floating"><input type="text" class="form-control" id="mUsername" name="username" placeholder="Username" required value="{{ form_data.username|default:'' }}"><label>Username</label></div>
+<div class="form-floating"><input type="email" class="form-control" id="mEmail" name="email" placeholder="Email" required value="{{ form_data.email|default:'' }}"><label>Email</label></div>
+<div class="form-floating"><input type="tel" class="form-control" id="mPhone" name="phone" placeholder="Phone" required value="{{ form_data.phone|default:'' }}"><label>Phone Number</label></div>
+<div class="form-floating"><input type="text" class="form-control" id="mAadhaar" name="aadhaar_number" placeholder="Aadhaar" maxlength="12" value="{{ form_data.aadhaar_number|default:'' }}"><label>Aadhaar Number</label></div>
+<div class="mb-3"><label class="dg-label">Aadhaar Document</label><input type="file" class="form-control" id="mAadhaarDoc" name="aadhaar_document" accept=".pdf,.jpg,.png"></div>
+<div class="row g-2">
+<div class="col-6"><div class="form-floating"><input type="number" class="form-control" id="mExp" name="experience_years" placeholder="Exp" min="0" value="{{ form_data.experience_years|default:'0' }}"><label>Experience (Years)</label></div></div>
+<div class="col-6"><div class="form-floating"><input type="number" class="form-control" id="mRate" name="hourly_rate" placeholder="Rate" value="{{ form_data.hourly_rate|default:'200' }}"><label>Hourly Rate (₹)</label></div></div>
+</div>
+<div class="form-floating"><textarea class="form-control" id="mBio" name="bio" placeholder="Bio" style="height:80px">{{ form_data.bio|default:'' }}</textarea><label>Short Bio</label></div>
+<div class="form-floating"><input type="password" class="form-control" id="mPassword" name="password" placeholder="Password" required minlength="8"><label>Password</label></div>
+<div class="form-floating"><input type="password" class="form-control" id="mPasswordConfirm" name="password_confirm" placeholder="Confirm" required><label>Confirm Password</label></div>
+<button type="submit" class="btn-premium w-100 justify-content-center btn-premium-lg mt-2" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)" id="maidRegBtn"><i class="bi bi-check-circle"></i> Register as Partner</button>
+</form>
+<div class="text-center mt-3"><p class="text-muted small">Already registered? <a href="{% url 'login' %}" style="color:#7c3aed;font-weight:600">Sign In</a></p></div>
+</div></div></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('maidRegForm').addEventListener('submit', function() {
+    const btn = document.getElementById('maidRegBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registering...';
+});
+</script>
+{% endblock %}

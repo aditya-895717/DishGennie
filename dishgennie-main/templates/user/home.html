@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load static %}
+{% block theme %}user{% endblock %}
+{% block title %}Home{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block body %}
+<div data-theme="user">
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-home fixed-top">
+<div class="container">
+<a class="navbar-brand" href="/"><i class="bi bi-house-heart me-2"></i>Dish<span>Gennie</span></a>
+<button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#homeNav"><i class="bi bi-list text-white fs-4"></i></button>
+<div class="collapse navbar-collapse" id="homeNav">
+<ul class="navbar-nav ms-auto align-items-center gap-1">
+<li class="nav-item"><a class="nav-link" href="{% url 'find-maid' %}"><b>Find Maid</b></a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'my-bookings' %}"><b>My Bookings</b></a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'wallet' %}"><b>Wallet</b></a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'support' %}"><b>Support</b></a></li>
+{% if user.is_authenticated %}
+<li class="nav-item"><a class="nav-link" href="{% url 'user-profile' %}"><i class="bi bi-person-circle me-1"></i>{{ user.first_name|default:user.username }}</a></li>
+<li class="nav-item"><form method="POST" action="{% url 'logout' %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-light ms-2">Logout</button></form></li>
+{% else %}
+<li class="nav-item"><a href="{% url 'login' %}" class="btn-premium btn-premium-sm ms-2">Sign In</a></li>
+{% endif %}
+</ul>
+</div>
+</div>
+</nav>
+
+<!-- Hero -->
+<section class="hero-section">
+<div class="container">
+<div class="row align-items-center">
+<div class="col-lg-7 hero-content">
+<h1 class="hero-title animate-fade-in-up">Professional Home Help<br>in <span style="color:var(--accent-light)">60 Seconds</span></h1>
+<p class="hero-subtitle animate-fade-in-up stagger-1">Book verified, background-checked maids for cooking, cleaning, laundry, baby care & more. Trusted by 50,000+ families.</p>
+<div class="hero-search animate-fade-in-up stagger-2">
+<input type="text" class="form-control" id="heroSearch" placeholder="Enter your city or locality...">
+<a href="{% url 'find-maid' %}" class="btn-premium"><i class="bi bi-search me-1"></i> Find Maid</a>
+</div>
+<div class="hero-stats animate-fade-in-up stagger-3">
+<div><div class="hero-stat-value">50K+</div><div class="hero-stat-label">Happy Families</div></div>
+<div><div class="hero-stat-value">10K+</div><div class="hero-stat-label">Verified Maids</div></div>
+<div><div class="hero-stat-value">25+</div><div class="hero-stat-label">Cities</div></div>
+<div><div class="hero-stat-value">4.8★</div><div class="hero-stat-label">Avg Rating</div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Services -->
+<section class="services-section">
+<div class="container">
+<h2 class="section-title">Our Services</h2>
+<p class="section-subtitle">Professional home services at your fingertips</p>
+<div class="row g-4">
+<div class="col-6 col-md-4 col-lg-3 animate-fade-in-up stagger-1"><div class="service-card"><div class="service-card-icon"><i class="bi bi-bucket"></i></div><h5>House Cleaning</h5><p>Deep cleaning, mopping, dusting</p><div class="service-card-price">From ₹299</div></div></div>
+<div class="col-6 col-md-4 col-lg-3 animate-fade-in-up stagger-2"><div class="service-card"><div class="service-card-icon"><i class="bi bi-fire"></i></div><h5>Cooking</h5><p>Daily meals, special dishes</p><div class="service-card-price">From ₹399</div></div></div>
+<div class="col-6 col-md-4 col-lg-3 animate-fade-in-up stagger-3"><div class="service-card"><div class="service-card-icon"><i class="bi bi-water"></i></div><h5>Laundry</h5><p>Washing, ironing, folding</p><div class="service-card-price">From ₹249</div></div></div>
+<div class="col-6 col-md-4 col-lg-3 animate-fade-in-up stagger-4"><div class="service-card"><div class="service-card-icon"><i class="bi bi-emoji-smile"></i></div><h5>Baby Care</h5><p>Nanny, babysitting services</p><div class="service-card-price">From ₹499</div></div></div>
+<div class="col-6 col-md-4 col-lg-3 animate-fade-in-up stagger-5"><div class="service-card"><div class="service-card-icon"><i class="bi bi-heart-pulse"></i></div><h5>Elder Care</h5><p>Companionship, assistance</p><div class="service-card-price">From ₹449</div></div></div>
+<div class="col-6 col-md-4 col-lg-3 animate-fade-in-up stagger-6"><div class="service-card"><div class="service-card-icon"><i class="bi bi-stars"></i></div><h5>Deep Cleaning</h5><p>Full house deep clean</p><div class="service-card-price">From ₹999</div></div></div>
+<div class="col-6 col-md-4 col-lg-3 animate-fade-in-up"><div class="service-card"><div class="service-card-icon"><i class="bi bi-cup-hot"></i></div><h5>Kitchen Help</h5><p>Dish washing, kitchen organization</p><div class="service-card-price">From ₹199</div></div></div>
+<div class="col-6 col-md-4 col-lg-3 animate-fade-in-up"><div class="service-card"><div class="service-card-icon"><i class="bi bi-house-gear"></i></div><h5>All-in-One</h5><p>Complete home management</p><div class="service-card-price">From ₹799</div></div></div>
+</div>
+</div>
+</section>
+
+<!-- Trust Badges -->
+<section class="trust-section">
+<div class="container">
+<div class="row g-4">
+<div class="col-md-3"><div class="trust-card animate-fade-in-up"><i class="bi bi-shield-check d-block"></i><h5>Background Verified</h5><p>Every maid goes through Aadhaar & police verification</p></div></div>
+<div class="col-md-3"><div class="trust-card animate-fade-in-up stagger-1"><i class="bi bi-cash-stack d-block"></i><h5>Secure Payments</h5><p>100% secure transactions with money-back guarantee</p></div></div>
+<div class="col-md-3"><div class="trust-card animate-fade-in-up stagger-2"><i class="bi bi-geo-alt d-block"></i><h5>Live Tracking</h5><p>Track your maid's arrival in real-time on map</p></div></div>
+<div class="col-md-3"><div class="trust-card animate-fade-in-up stagger-3"><i class="bi bi-headset d-block"></i><h5>24/7 Support</h5><p>Round-the-clock customer support team</p></div></div>
+</div>
+</div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+<div class="container">
+<h2 class="animate-fade-in-up">Ready to Book Your Perfect Maid?</h2>
+<p class="animate-fade-in-up stagger-1">Join 50,000+ happy families. Book now and get ₹100 off your first booking!</p>
+<a href="{% url 'find-maid' %}" class="btn-premium btn-premium-lg animate-fade-in-up stagger-2"><i class="bi bi-lightning-charge-fill me-1"></i> Book Now — It's Quick!</a>
+</div>
+</section>
+
+<!-- Footer -->
+<footer>
+<div class="container">
+<div class="row g-4">
+<div class="col-md-4"><h5><i class="bi bi-house-heart me-2"></i>DishGennie</h5><p class="small">Premium maid booking platform. Verified, trusted, and professional house help at your doorstep.</p></div>
+<div class="col-md-2"><h6>Services</h6><ul class="list-unstyled small"><li class="mb-2"><a href="#" class="text-muted">Cleaning</a></li><li class="mb-2"><a href="#" class="text-muted">Cooking</a></li><li class="mb-2"><a href="#" class="text-muted">Laundry</a></li><li class="mb-2"><a href="#" class="text-muted">Baby Care</a></li></ul></div>
+<div class="col-md-2"><h6>Company</h6><ul class="list-unstyled small"><li class="mb-2"><a href="#" class="text-muted">About</a></li><li class="mb-2"><a href="#" class="text-muted">Careers</a></li><li class="mb-2"><a href="#" class="text-muted">Press</a></li><li class="mb-2"><a href="#" class="text-muted">Blog</a></li></ul></div>
+<div class="col-md-4"><h6>Become a Partner</h6><p class="small">Earn ₹25,000+ per month. Join our growing network of trusted maids.</p><a href="{% url 'maid-register' %}" class="btn-premium btn-premium-sm">Register Now</a></div>
+</div>
+<hr>
+<p class="text-center small mb-0">© 2026 DishGennie. All rights reserved.</p>
+</div>
+</footer>
+</div>
+{% endblock %}

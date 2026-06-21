@@ -1,0 +1,38 @@
+{% extends "maid/base_maid.html" %}
+{% block m_nav_rev %}active{% endblock %}
+{% block page_title %}My Reviews{% endblock %}
+{% block content %}
+<div class="row g-4 mb-4">
+<div class="col-md-4 animate-fade-in-up"><div class="glass-card text-center"><div id="avgRating" style="font-size:3rem;font-weight:800;color:#7c3aed;font-family:var(--font-display)">0.0</div><div class="rating-stars mb-2 justify-content-center" id="avgStars" style="font-size:1.2rem"></div><div class="small text-muted" id="totalReviews">Based on 0 reviews</div></div></div>
+<div class="col-md-8 animate-fade-in-up stagger-1"><div class="glass-card" id="ratingBars"></div></div>
+</div>
+<div class="chart-card animate-fade-in-up stagger-2"><div class="chart-card-header"><div class="chart-card-title">Recent Reviews</div></div>
+<div id="reviewsList"><div class="text-center text-muted py-4">Loading reviews...</div></div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const maidUserId = document.querySelector('meta[name="user-id"]')?.content;
+function asList(data){return Array.isArray(data) ? data : (data?.results || []);}
+function stars(rating){const n=Math.round(Number(rating||0));return Array.from({length:5},(_,i)=>`<i class="bi bi-star${i<n?'-fill filled':''}"></i>`).join('');}
+function bars(reviews){
+const counts = [5,4,3,2,1].map(star => ({star, count: reviews.filter(r=>Number(r.rating)===star).length}));
+const max = Math.max(...counts.map(c=>c.count), 1);
+return counts.map(c=>`<div class="d-flex align-items-center gap-2 mb-2"><span class="small fw-bold" style="width:28px">${c.star}★</span><div class="progress flex-fill" style="height:8px"><div class="progress-bar" style="width:${(c.count/max)*100}%;background:${c.star>=4?'var(--success)':c.star===3?'var(--warning)':'var(--danger)'};border-radius:4px"></div></div><span class="small text-muted" style="width:30px">${c.count}</span></div>`).join('');
+}
+async function loadReviews(){
+const reviews = asList(await DG.api(`/reviews/maid/${maidUserId}/`));
+const avg = reviews.length ? reviews.reduce((sum,r)=>sum+Number(r.rating || 0),0)/reviews.length : 0;
+document.getElementById('avgRating').textContent = avg.toFixed(1);
+document.getElementById('avgStars').innerHTML = stars(avg);
+document.getElementById('totalReviews').textContent = `Based on ${reviews.length} reviews`;
+document.getElementById('ratingBars').innerHTML = bars(reviews);
+document.getElementById('reviewsList').innerHTML = reviews.length ? reviews.map((r,idx)=>`
+<div class="d-flex gap-3 p-3" style="${idx < reviews.length-1 ? 'border-bottom:1px solid var(--gray-100)' : ''}">
+<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(r.customer_name || 'Customer')}&background=e2e8f0&color=475569&size=80" class="rounded-circle" width="44" height="44" alt="">
+<div class="flex-fill"><div class="d-flex justify-content-between"><span class="fw-bold small">${r.customer_name || 'Customer'}</span><span class="small text-muted">${DG.formatDate(r.created_at)}</span></div>
+<div class="rating-stars my-1">${stars(r.rating)}</div><p class="small text-muted mb-0">${r.comment || 'No comment provided.'}</p></div></div>`).join('') : '<div class="text-center text-muted py-4">No reviews yet.</div>';
+}
+document.addEventListener('DOMContentLoaded', loadReviews);
+</script>
+{% endblock %}

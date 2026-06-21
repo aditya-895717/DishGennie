@@ -1,0 +1,81 @@
+{% extends "user/base_user.html" %}
+{% block page_title %}Maid Profile{% endblock %}
+{% block content %}
+<div class="row g-4">
+<div class="col-lg-4 animate-fade-in-up">
+<div class="glass-card text-center" id="profileCard">
+<div class="spinner-border text-primary my-4" role="status"></div>
+</div>
+</div>
+<div class="col-lg-8">
+<div class="glass-card mb-3 animate-fade-in-up stagger-1">
+<h5 class="fw-bold mb-2">About</h5>
+<p class="text-muted mb-0" id="maidBio">Loading profile...</p>
+</div>
+<div class="glass-card mb-3 animate-fade-in-up stagger-2">
+<div class="d-flex justify-content-between align-items-center mb-3">
+<h5 class="fw-bold mb-0">Reviews</h5>
+<span class="small text-muted" id="reviewCount"></span>
+</div>
+<div id="reviewList"><div class="text-muted small">Loading reviews...</div></div>
+</div>
+<a href="{% url 'booking-flow' %}" id="bookBtn" class="btn-premium btn-premium-lg w-100 justify-content-center disabled"><i class="bi bi-lightning-charge-fill me-2"></i>Book Maid</a>
+</div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const maidProfileId = '{{ maid_id }}';
+function stars(rating){
+const n = Math.round(Number(rating || 0));
+return Array.from({length:5},(_,i)=>`<i class="bi bi-star${i<n?'-fill filled':''}"></i>`).join('');
+}
+function displayName(user){
+return `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.username || 'Maid';
+}
+function renderEmpty(message){
+return `<div class="text-center text-muted small py-4">${message}</div>`;
+}
+function asList(data){return Array.isArray(data) ? data : (data?.results || []);}
+async function loadProfile(){
+const profile = await DG.api(`/accounts/maids/${maidProfileId}/`);
+if(!profile || profile.error){
+document.getElementById('profileCard').innerHTML = renderEmpty(profile?.error || 'Maid profile could not be loaded.');
+document.getElementById('maidBio').textContent = 'This profile is not available right now.';
+return;
+}
+const name = displayName(profile.user);
+const city = profile.user?.city || 'Service city not set';
+const skills = (profile.skills || []).map(s=>`<span class="maid-card-skill-badge">${s}</span>`).join('') || '<span class="text-muted small">No skills listed</span>';
+document.getElementById('profileCard').innerHTML = `
+<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0d9488&color=fff&size=200&bold=true" class="rounded-circle mb-3" width="120" height="120" alt="${name}">
+<h4 class="fw-bold mb-1">${name}</h4>
+<div class="mb-2"><span class="maid-card-verified"><i class="bi bi-patch-check-fill"></i> ${profile.verification_status || 'approved'}</span></div>
+<div class="maid-card-rating justify-content-center mb-3" style="font-size:.95rem">${stars(profile.avg_rating)}<strong class="ms-1">${Number(profile.avg_rating || 0).toFixed(1)}</strong><span>(${profile.total_reviews || 0} reviews)</span></div>
+<hr>
+<div class="text-start small">
+<p class="mb-2"><i class="bi bi-geo-alt me-2 text-primary"></i>${city}</p>
+<p class="mb-2"><i class="bi bi-briefcase me-2 text-primary"></i>${profile.experience_years || 0} years experience</p>
+<p class="mb-2"><i class="bi bi-translate me-2 text-primary"></i>${profile.languages || 'Languages not listed'}</p>
+<p class="mb-0"><i class="bi bi-calendar-check me-2 text-primary"></i>${profile.total_jobs || 0} jobs completed</p>
+</div>
+<hr><div class="maid-card-skills justify-content-center">${skills}</div>`;
+document.getElementById('maidBio').textContent = profile.bio || 'This partner has not added a bio yet.';
+const bookBtn = document.getElementById('bookBtn');
+bookBtn.href = `{% url 'booking-flow' %}?maid_profile=${profile.id}`;
+bookBtn.classList.toggle('disabled', !profile.is_available);
+bookBtn.innerHTML = `<i class="bi bi-lightning-charge-fill me-2"></i>${profile.is_available ? `Book ${name} - ${DG.formatCurrency(profile.hourly_rate || 0)}/hr` : 'Currently unavailable'}`;
+if(profile.user?.id) loadReviews(profile.user.id);
+}
+async function loadReviews(maidUserId){
+const reviews = asList(await DG.api(`/reviews/maid/${maidUserId}/`));
+document.getElementById('reviewCount').textContent = `${reviews.length} total`;
+document.getElementById('reviewList').innerHTML = reviews.length ? reviews.map(r=>`
+<div class="d-flex gap-3 mb-3 pb-3" style="border-bottom:1px solid var(--gray-100)">
+<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(r.customer_name || 'Customer')}&background=e2e8f0&color=475569&size=80" class="rounded-circle" width="40" height="40" alt="">
+<div class="flex-fill"><div class="d-flex justify-content-between"><div class="fw-bold small">${r.customer_name || 'Customer'}</div><div class="small text-muted">${DG.formatDate(r.created_at)}</div></div>
+<div class="rating-stars my-1">${stars(r.rating)}</div><p class="small text-muted mb-0">${r.comment || 'No comment provided.'}</p></div></div>`).join('') : renderEmpty('No reviews yet.');
+}
+document.addEventListener('DOMContentLoaded', loadProfile);
+</script>
+{% endblock %}

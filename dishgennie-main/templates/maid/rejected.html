@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Verification Rejected{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/signup.css' %}">
+<style>
+.rejected-page { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#fef2f2 0%,#fff1f2 50%,#ffe4e6 100%); padding:24px; }
+.rejected-card {
+    max-width:520px; width:100%; background:#fff; border-radius:16px;
+    box-shadow:0 20px 60px rgba(0,0,0,.08); padding:48px 40px; text-align:center;
+}
+.rejected-icon { font-size:4rem; color:#ef4444; margin-bottom:16px; }
+.rejected-card h2 { color:#1f2937; margin-bottom:8px; font-size:1.5rem; }
+.rejected-card .subtitle { color:#6b7280; font-size:.95rem; margin-bottom:24px; }
+.remarks-box {
+    background:#fef2f2; border:1px solid #fecaca; border-radius:10px;
+    padding:16px 20px; margin-bottom:24px; text-align:left;
+}
+.remarks-box .label { font-size:.75rem; font-weight:700; color:#ef4444; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+.remarks-box .text { color:#374151; font-size:.9rem; line-height:1.5; }
+.action-btns { display:flex; gap:12px; flex-direction:column; }
+.action-btns .btn-primary-custom {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    padding:14px 20px; border:none; border-radius:10px; font-weight:600;
+    cursor:pointer; font-size:.95rem; transition:all .2s; text-decoration:none;
+}
+.btn-contact { background:#0d6356; color:#fff; }
+.btn-contact:hover { background:#0a5248; color:#fff; }
+.btn-reregister { background:#f3f4f6; color:#374151; }
+.btn-reregister:hover { background:#e5e7eb; color:#1f2937; }
+.btn-logout { background:transparent; color:#ef4444; border:1px solid #fecaca !important; }
+.btn-logout:hover { background:#fef2f2; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="rejected-page">
+<div class="rejected-card animate-fade-in-up">
+    <div class="rejected-icon"><i class="bi bi-shield-x"></i></div>
+    <h2>Verification Rejected</h2>
+    <p class="subtitle">Unfortunately, your maid partner application has been reviewed and could not be approved at this time.</p>
+
+    {% if verification_remarks %}
+    <div class="remarks-box">
+        <div class="label"><i class="bi bi-info-circle"></i> Admin Remarks</div>
+        <div class="text">{{ verification_remarks }}</div>
+    </div>
+    {% endif %}
+
+    <div class="action-btns">
+        <a href="{% url 'support' %}" class="btn-primary-custom btn-contact">
+            <i class="bi bi-headset"></i> Contact Support
+        </a>
+        <a href="{% url 'maid-register' %}" class="btn-primary-custom btn-reregister" id="reregisterBtn">
+            <i class="bi bi-arrow-repeat"></i> Re-Register with New Details
+        </a>
+        <form method="POST" action="{% url 'logout' %}" class="w-100">
+            {% csrf_token %}
+            <button type="submit" class="btn-primary-custom btn-logout w-100">
+                <i class="bi bi-box-arrow-left"></i> Logout
+            </button>
+        </form>
+    </div>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,146 @@
+{% extends "user/base_user.html" %}
+{% block nav_bookings %}active{% endblock %}
+{% block page_title %}My Bookings{% endblock %}
+{% block content %}
+<ul class="nav nav-pills mb-4 gap-2" id="bookingTabs">
+<li class="nav-item"><a class="nav-link active btn-premium-sm" data-bs-toggle="pill" href="#active">Active <span class="badge bg-light text-dark ms-1" id="activeCount">0</span></a></li>
+<li class="nav-item"><a class="nav-link btn-premium-sm" data-bs-toggle="pill" href="#past" style="background:transparent;color:var(--gray-600);border:1px solid var(--gray-200)">Past <span class="badge bg-light text-dark ms-1" id="pastCount">0</span></a></li>
+<li class="nav-item"><a class="nav-link btn-premium-sm" data-bs-toggle="pill" href="#cancelled" style="background:transparent;color:var(--gray-600);border:1px solid var(--gray-200)">Cancelled <span class="badge bg-light text-dark ms-1" id="cancelledCount">0</span></a></li>
+</ul>
+<div class="tab-content">
+<div class="tab-pane fade show active" id="active"><div class="row g-4" id="activeBookings"></div></div>
+<div class="tab-pane fade" id="past"><div class="row g-4" id="pastBookings"></div></div>
+<div class="tab-pane fade" id="cancelled"><div class="row g-4" id="cancelledBookings"></div></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const ACTIVE_STATUSES = ['pending', 'accepted', 'en_route', 'in_progress'];
+
+function bookingStatusLabel(status) {
+    return (status || '').replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function bookingWhen(booking) {
+    if (booking.scheduled_date) {
+        const time = booking.scheduled_time ? `, ${booking.scheduled_time.slice(0, 5)}` : '';
+        return `${DG.formatDate(booking.scheduled_date)}${time}`;
+    }
+    return DG.formatDate(booking.created_at);
+}
+
+function emptyBookings(title, text, icon = 'calendar-x') {
+    return `
+        <div class="col-12">
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-${icon}"></i></div>
+                <h5 class="empty-state-title">${title}</h5>
+                <p class="empty-state-text">${text}</p>
+            </div>
+        </div>
+    `;
+}
+
+function bookingCard(booking) {
+    const isCancellable = ['pending', 'accepted'].includes(booking.status);
+    const canTrack = ACTIVE_STATUSES.includes(booking.status);
+    const maidName = booking.maid_name || 'Assigned maid';
+    return `
+        <div class="col-md-6 animate-fade-in-up">
+            <div class="booking-card" data-booking-id="${booking.id}">
+                <div class="booking-card-header">
+                    <div>
+                        <div class="booking-card-id">Booking #DG${String(booking.id).padStart(4, '0')}</div>
+                        <h5 class="mt-1 mb-1" style="font-size:1rem;font-weight:700">${booking.service_name || 'Home Service'}</h5>
+                        <div class="small text-muted"><i class="bi bi-calendar me-1"></i>${bookingWhen(booking)}</div>
+                    </div>
+                    <span class="status-badge ${booking.status}">${bookingStatusLabel(booking.status)}</span>
+                </div>
+                <div class="d-flex align-items-center gap-3 mt-3 p-3 rounded-3" style="background:var(--gray-50)">
+                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(maidName)}&background=0d9488&color=fff&size=80" class="rounded-3" width="48" height="48" alt="Maid">
+                    <div>
+                        <div class="fw-bold small">${maidName}</div>
+                        <div class="text-muted" style="font-size:.78rem"><i class="bi bi-clock me-1"></i>${booking.duration_hours || 2} hrs</div>
+                    </div>
+                    <div class="ms-auto fw-bold" style="color:var(--primary)">${DG.formatCurrency(booking.final_amount || booking.total_amount || 0)}</div>
+                </div>
+                <div class="d-flex gap-2 mt-3 flex-wrap">
+                    ${canTrack ? `<a href="/live-tracking/${booking.id}/" class="btn-premium btn-premium-sm flex-fill justify-content-center"><i class="bi bi-geo-alt"></i> Track</a>` : ''}
+                    <button type="button" class="btn-premium-outline btn-premium-sm flex-fill justify-content-center" onclick="openBookingChat(${booking.id}, '${maidName.replace(/'/g, "\\'")}')"><i class="bi bi-chat"></i> Chat</button>
+                    ${isCancellable ? `<button type="button" class="btn btn-sm btn-outline-danger flex-fill" onclick="cancelBooking(${booking.id})"><i class="bi bi-x-circle"></i> Cancel</button>` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderBookingGroup(elementId, bookings, emptyTitle, emptyText, icon) {
+    const element = document.getElementById(elementId);
+    element.innerHTML = bookings.length ? bookings.map(bookingCard).join('') : emptyBookings(emptyTitle, emptyText, icon);
+}
+
+async function loadBookings() {
+    const activeEl = document.getElementById('activeBookings');
+    activeEl.innerHTML = emptyBookings('Loading bookings...', 'Fetching your latest booking status.', 'hourglass-split');
+
+    const data = await DG.api('/bookings/');
+    const bookings = data?.results || data || [];
+    const active = bookings.filter(b => ACTIVE_STATUSES.includes(b.status));
+    const past = bookings.filter(b => b.status === 'completed');
+    const cancelled = bookings.filter(b => b.status === 'cancelled');
+
+    document.getElementById('activeCount').textContent = active.length;
+    document.getElementById('pastCount').textContent = past.length;
+    document.getElementById('cancelledCount').textContent = cancelled.length;
+
+    renderBookingGroup('activeBookings', active, 'No Active Bookings', 'Book a maid to see tracking, chat, and cancellation controls here.', 'calendar-x');
+    renderBookingGroup('pastBookings', past, 'No Past Bookings', 'Your completed bookings will appear here.', 'calendar-check');
+    renderBookingGroup('cancelledBookings', cancelled, 'No Cancelled Bookings', 'Cancelled bookings will appear here for reference.', 'x-circle');
+    DG.init();
+}
+
+function cancelBooking(bookingId) {
+    DG.confirm(
+        'Cancel Booking',
+        `Cancel booking #DG${String(bookingId).padStart(4, '0')}? This action will notify the assigned maid.`,
+        async () => {
+            const response = await DG.api(`/bookings/${bookingId}/cancel/`, {
+                method: 'POST',
+                body: JSON.stringify({ reason: 'Cancelled by customer from My Bookings.' }),
+            });
+            if (response?.error) {
+                DG.toast('Unable to cancel', response.error, 'error');
+                return;
+            }
+            DG.toast('Booking cancelled', 'Your booking has been moved to Cancelled.', 'success');
+            loadBookings();
+        },
+        { danger: true, icon: 'x-circle', confirmText: 'Cancel Booking' }
+    );
+}
+
+function openBookingChat(bookingId, maidName) {
+    const message = window.prompt(`Message ${maidName} about booking #DG${String(bookingId).padStart(4, '0')}:`);
+    if (!message || !message.trim()) return;
+
+    DG.api('/support/tickets/', {
+        method: 'POST',
+        body: JSON.stringify({
+            booking: bookingId,
+            subject: `Chat for Booking #DG${String(bookingId).padStart(4, '0')}`,
+            description: message.trim(),
+            priority: 'medium',
+        }),
+    }).then(response => {
+        if (response?.error) {
+            DG.toast('Chat not sent', response.error, 'error');
+            return;
+        }
+        DG.toast('Message sent', 'Your chat request is now linked to this booking.', 'success');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', loadBookings);
+</script>
+{% endblock %}

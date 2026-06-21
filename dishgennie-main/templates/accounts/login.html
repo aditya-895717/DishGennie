@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Login{% endblock %}
+{% block meta_description %}Sign in to DishGennie — Your premium maid booking platform.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+
+{% block body %}
+<div class="auth-page" data-theme="user">
+    <!-- Left Panel — Branding -->
+    <div class="auth-left">
+        <h1 class="animate-fade-in-up">Dish<span>Gennie</span></h1>
+        <p class="animate-fade-in-up stagger-1">Premium maid booking platform. Verified, trusted, and professional house help at your doorstep.</p>
+        <div class="auth-features animate-fade-in-up stagger-2">
+            <div class="auth-feature"><i class="bi bi-shield-check"></i> Verified & Background Checked</div>
+            <div class="auth-feature"><i class="bi bi-clock"></i> Book in 60 Seconds</div>
+            <div class="auth-feature"><i class="bi bi-star"></i> 4.8★ Average Rating</div>
+            <div class="auth-feature"><i class="bi bi-geo-alt"></i> Available in 25+ Cities</div>
+        </div>
+    </div>
+
+    <!-- Right Panel — Login Form -->
+    <div class="auth-right">
+        <div class="auth-form-container animate-fade-in-up">
+            <div class="auth-brand">
+                <div class="auth-brand-icon"><i class="bi bi-house-heart"></i></div>
+                <h2>Dish<span>Gennie</span></h2>
+            </div>
+
+            <h3 class="auth-form-title">Welcome back 👋</h3>
+            <p class="auth-form-subtitle">Sign in to continue booking professional maids</p>
+
+            <!-- Django Messages -->
+            {% if messages %}
+            {% for message in messages %}
+            <div class="dg-alert dg-alert-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}">
+                <i class="bi bi-{% if message.tags == 'error' %}exclamation-circle-fill{% elif message.tags == 'success' %}check-circle-fill{% else %}info-circle-fill{% endif %}"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <form class="auth-form" id="loginForm" method="POST" action="{% url 'login' %}">
+                {% csrf_token %}
+                <div class="form-floating">
+                    <input type="text" class="form-control" id="loginUsername" name="username" placeholder="Username" required value="{{ request.POST.username|default:'' }}">
+                    <label for="loginUsername"><i class="bi bi-person me-2"></i>Username</label>
+                </div>
+                <div class="form-floating">
+                    <input type="password" class="form-control" id="loginPassword" name="password" placeholder="Password" required>
+                    <label for="loginPassword"><i class="bi bi-lock me-2"></i>Password</label>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="rememberMe" name="remember_me" value="1">
+                        <label class="form-check-label small text-muted" for="rememberMe">Remember me</label>
+                    </div>
+                    <a href="{% url 'forgot-password' %}" class="small">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn-premium w-100 justify-content-center btn-premium-lg" id="loginBtn">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign In
+                </button>
+            </form>
+
+            <div class="auth-divider">or</div>
+
+            <div class="text-center">
+                <p class="text-muted small mb-2">Don't have an account?</p>
+                <a href="{% url 'signup' %}" class="btn-premium-outline w-100 justify-content-center">
+                    <i class="bi bi-person-plus"></i> Create Account
+                </a>
+            </div>
+
+            <div class="text-center mt-3">
+                <a href="{% url 'maid-register' %}" class="small">
+                    <i class="bi bi-briefcase me-1"></i> Register as a Maid Partner →
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add loading state to submit button
+    const form = document.getElementById('loginForm');
+    form.addEventListener('submit', function() {
+        const btn = document.getElementById('loginBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Signing in...';
+    });
+});
+</script>
+{% endblock %}

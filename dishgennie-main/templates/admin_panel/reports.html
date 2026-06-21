@@ -1,0 +1,42 @@
+{% extends "admin_panel/base_admin.html" %}
+{% block a_nav_rep %}active{% endblock %}
+{% block page_title %}Reports{% endblock %}
+{% block content %}
+<div class="row g-4" id="reportGrid"></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const reports = [
+{key:'revenue', icon:'file-earmark-bar-graph', color:'#4f46e5', title:'Revenue Report', desc:'Daily revenue and booking trend', load:()=>DG.api('/admin-panel/revenue-chart/')},
+{key:'users', icon:'people', color:'#7c3aed', title:'User Growth Report', desc:'Customers and partners currently on platform', load:()=>DG.api('/admin-panel/dashboard/')},
+{key:'bookings', icon:'calendar-check', color:'#06b6d4', title:'Booking Report', desc:'Booking totals, completion and active work', load:()=>DG.api('/admin-panel/dashboard/')},
+{key:'services', icon:'star', color:'#f59e0b', title:'Service Quality', desc:'Service category bookings and revenue', load:()=>DG.api('/admin-panel/service-analytics/')},
+{key:'cities', icon:'geo-alt', color:'#10b981', title:'City Performance', desc:'City-wise booking and revenue metrics', load:()=>DG.api('/admin-panel/city-analytics/')},
+{key:'payments', icon:'cash-stack', color:'#ef4444', title:'Payout Report', desc:'Payment transactions and payout summary', load:()=>DG.api('/payments/admin/reports/')},
+];
+function flatten(data){
+const rows = Array.isArray(data) ? data : [data];
+const headers = [...new Set(rows.flatMap(row => Object.keys(row || {})))];
+return [headers.join(','), ...rows.map(row => headers.map(h => `"${String(row?.[h] ?? '').replaceAll('"','""')}"`).join(','))].join('\n');
+}
+function downloadCsv(name, data){
+const blob = new Blob([flatten(data)], {type:'text/csv;charset=utf-8'});
+const url = URL.createObjectURL(blob);
+const link = Object.assign(document.createElement('a'), {href:url, download:`dishgennie-${name}-${new Date().toISOString().slice(0,10)}.csv`});
+document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+}
+async function downloadReport(report){
+const data = await report.load();
+if(!data || data.error){DG.toast('Report unavailable', data?.error || 'Please try again.', 'error'); return;}
+downloadCsv(report.key, data);
+DG.toast('Report downloaded', `${report.title} is ready.`, 'success');
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+document.getElementById('reportGrid').innerHTML = reports.map((r,i)=>`
+<div class="col-md-4 animate-fade-in-up stagger-${i+1}"><div class="glass-card text-center hover-lift h-100">
+<i class="bi bi-${r.icon} d-block mb-3" style="font-size:2.5rem;color:${r.color}"></i><h5 class="fw-bold">${r.title}</h5><p class="small text-muted">${r.desc}</p>
+<button class="btn-premium btn-premium-sm" data-report="${r.key}"><i class="bi bi-download me-1"></i>Download</button></div></div>`).join('');
+document.querySelectorAll('[data-report]').forEach(btn => btn.addEventListener('click', () => downloadReport(reports.find(r=>r.key===btn.dataset.report))));
+});
+</script>
+{% endblock %}

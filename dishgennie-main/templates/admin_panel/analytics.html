@@ -1,0 +1,52 @@
+{% extends "admin_panel/base_admin.html" %}
+{% block a_nav_analytics %}active{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4"><div class="col-auto"><div class="d-flex gap-2 flex-wrap"><input type="date" class="dg-input" id="fromDate" style="padding:8px 12px;font-size:.85rem;width:auto"><span class="align-self-center text-muted">to</span><input type="date" class="dg-input" id="toDate" style="padding:8px 12px;font-size:.85rem;width:auto"><button class="btn-premium btn-premium-sm" id="applyBtn"><i class="bi bi-funnel"></i> Apply</button></div></div></div>
+<div class="row g-4 mb-4">
+<div class="col-12 col-lg-6 animate-fade-in-up"><div class="chart-card"><div class="chart-card-title mb-3">Revenue and Bookings</div><div class="chart-wrapper chart-wrapper--line"><canvas id="acqChart"></canvas></div></div></div>
+<div class="col-12 col-lg-6 animate-fade-in-up stagger-1"><div class="chart-card"><div class="chart-card-title mb-3">Service Revenue</div><div class="chart-wrapper chart-wrapper--bar"><canvas id="payMethodChart"></canvas></div></div></div>
+</div>
+<div class="row g-4">
+<div class="col-12 col-lg-6 animate-fade-in-up stagger-2"><div class="chart-card"><div class="chart-card-title mb-3">City Performance</div><div class="table-responsive"><table class="table table-sm small mb-0"><thead><tr><th>City</th><th>Bookings</th><th>Revenue</th><th>Maids</th></tr></thead><tbody id="cityRows"><tr><td colspan="4" class="text-center text-muted py-4">Loading cities...</td></tr></tbody></table></div></div></div>
+<div class="col-12 col-lg-6 animate-fade-in-up stagger-3"><div class="chart-card"><div class="chart-card-title mb-3">Booking Completion</div><div class="chart-wrapper chart-wrapper--doughnut"><canvas id="retChart"></canvas></div></div></div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let revenueChart, serviceChart, completionChart;
+function lastDays(days){const d=new Date(); d.setDate(d.getDate()-days); return d.toISOString().slice(0,10);}
+function filterByDates(rows){
+const from = document.getElementById('fromDate').value;
+const to = document.getElementById('toDate').value;
+return rows.filter(r => (!from || r.date >= from) && (!to || r.date <= to));
+}
+async function loadAnalytics(){
+const [revenue, services, cities, dash] = await Promise.all([
+DG.api('/admin-panel/revenue-chart/'),
+DG.api('/admin-panel/service-analytics/'),
+DG.api('/admin-panel/city-analytics/'),
+DG.api('/admin-panel/dashboard/')
+]);
+const isMobile = window.innerWidth < 768;
+const revRows = filterByDates(revenue || []);
+const labels = revRows.map(r => new Date(r.date).toLocaleDateString('en-IN', {day:'numeric', month:'short'}));
+revenueChart?.destroy();
+revenueChart = new Chart(document.getElementById('acqChart'),{type:'line',data:{labels,datasets:[{label:'Revenue',data:revRows.map(r=>r.revenue),borderColor:'#4f46e5',fill:true,backgroundColor:'rgba(79,70,229,.08)',tension:.4,borderWidth:2,yAxisID:'y'},{label:'Bookings',data:revRows.map(r=>r.bookings),borderColor:'#06b6d4',fill:false,tension:.4,borderWidth:2,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,font:{size:isMobile?9:11}}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'₹'+v,font:{size:isMobile?9:11}}},y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false},ticks:{font:{size:isMobile?9:11}}},x:{grid:{display:false},ticks:{maxTicksLimit:isMobile?5:10,font:{size:isMobile?9:11}}}}}});
+serviceChart?.destroy();
+serviceChart = new Chart(document.getElementById('payMethodChart'),{type:'bar',data:{labels:(services||[]).map(s=>s.service),datasets:[{data:(services||[]).map(s=>s.revenue),backgroundColor:['#4f46e5','#06b6d4','#10b981','#f59e0b','#ef4444','#7c3aed'],borderRadius:8,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'₹'+v,font:{size:isMobile?9:11}}},x:{grid:{display:false},ticks:{font:{size:isMobile?9:11}}}}}});
+document.getElementById('cityRows').innerHTML = (cities || []).length ? cities.map(c=>`<tr><td class="fw-bold">${c.city}</td><td>${c.bookings}</td><td>${DG.formatCurrency(c.revenue)}</td><td>${c.maids}</td></tr>`).join('') : '<tr><td colspan="4" class="text-center text-muted py-4">No city data yet.</td></tr>';
+const completed = Number(dash?.completed_bookings || 0);
+const active = Number(dash?.active_bookings || 0);
+const other = Math.max(Number(dash?.total_bookings || 0) - completed - active, 0);
+completionChart?.destroy();
+completionChart = new Chart(document.getElementById('retChart'),{type:'doughnut',data:{labels:['Completed','Active','Other'],datasets:[{data:[completed, active, other],backgroundColor:['#10b981','#4f46e5','#f59e0b'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,font:{size:isMobile?10:11}}}},cutout:'65%'}});
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+document.getElementById('fromDate').value = lastDays(29);
+document.getElementById('toDate').value = new Date().toISOString().slice(0,10);
+document.getElementById('applyBtn').addEventListener('click', loadAnalytics);
+loadAnalytics();
+});
+</script>
+{% endblock %}

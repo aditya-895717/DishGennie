@@ -1,0 +1,44 @@
+{% extends "admin_panel/base_admin.html" %}
+{% block a_nav_book %}active{% endblock %}
+{% block page_title %}Bookings{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+<div class="col-6 col-lg-3 animate-fade-in-up"><div class="kpi-card"><div class="kpi-card-icon indigo"><i class="bi bi-calendar-check"></i></div><div class="kpi-card-value" id="totalBookings">0</div><div class="kpi-card-label">Total Bookings</div></div></div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-1"><div class="kpi-card"><div class="kpi-card-icon emerald"><i class="bi bi-check-circle"></i></div><div class="kpi-card-value" id="completedBookings">0</div><div class="kpi-card-label">Completed</div></div></div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-2"><div class="kpi-card"><div class="kpi-card-icon amber"><i class="bi bi-clock"></i></div><div class="kpi-card-value" id="activeBookings">0</div><div class="kpi-card-label">Active</div></div></div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-3"><div class="kpi-card"><div class="kpi-card-icon rose"><i class="bi bi-x-circle"></i></div><div class="kpi-card-value" id="cancelledBookings">0</div><div class="kpi-card-label">Cancelled</div></div></div>
+</div>
+<div class="chart-card animate-fade-in-up stagger-4">
+<div class="chart-card-header"><div class="chart-card-title">All Bookings</div><div class="d-flex gap-2"><select class="dg-input" id="bookingStatusFilter" style="width:140px;padding:8px 12px;font-size:.82rem"><option value="">All Status</option><option value="pending">Pending</option><option value="accepted">Accepted</option><option value="in_progress">In Progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div></div>
+<table class="dg-table"><thead><tr><th>ID</th><th>Customer</th><th>Maid</th><th>Service</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
+<tbody id="adminBookingsBody"></tbody></table></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let adminBookings = [];
+const activeStatuses = ['pending', 'accepted', 'en_route', 'in_progress'];
+function renderAdminBookings() {
+    const status = document.getElementById('bookingStatusFilter').value;
+    const bookings = status ? adminBookings.filter(b => b.status === status) : adminBookings;
+    document.getElementById('totalBookings').textContent = adminBookings.length;
+    document.getElementById('completedBookings').textContent = adminBookings.filter(b => b.status === 'completed').length;
+    document.getElementById('activeBookings').textContent = adminBookings.filter(b => activeStatuses.includes(b.status)).length;
+    document.getElementById('cancelledBookings').textContent = adminBookings.filter(b => b.status === 'cancelled').length;
+    document.getElementById('adminBookingsBody').innerHTML = bookings.length ? bookings.map(b => `<tr>
+        <td class="fw-bold small">#DG${String(b.id).padStart(4, '0')}</td>
+        <td class="small">${b.customer_name}</td>
+        <td class="small">${b.maid_name || '-'}</td>
+        <td class="small">${b.service_name || '-'}</td>
+        <td class="small text-muted">${DG.formatDate(b.created_at)}</td>
+        <td class="fw-bold">${DG.formatCurrency(b.final_amount || b.total_amount || 0)}</td>
+        <td><span class="status-badge ${b.status}">${b.status.replace('_', ' ')}</span></td>
+    </tr>`).join('') : '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-calendar-x"></i></div><div class="empty-state-title">No bookings found</div></div></td></tr>';
+}
+document.addEventListener('DOMContentLoaded', async function() {
+    const data = await DG.api('/bookings/');
+    adminBookings = data?.results || data || [];
+    renderAdminBookings();
+    document.getElementById('bookingStatusFilter').addEventListener('change', renderAdminBookings);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static %}
+{% block theme %}maid{% endblock %}
+{% block body %}
+<div class="dg-app" data-theme="maid">
+<div class="dg-sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+<aside class="dg-sidebar" id="sidebar">
+<div class="dg-sidebar-brand"><div class="dg-sidebar-brand-icon" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)"><i class="bi bi-briefcase"></i></div><div class="dg-sidebar-brand-text">Dish<span style="color:#7c3aed">Gennie</span> Partner</div></div>
+<nav class="dg-sidebar-nav">
+<div class="dg-nav-section"><div class="dg-nav-section-title">Dashboard</div>
+<a href="{% url 'maid-dashboard' %}" class="dg-nav-link {% block m_nav_dash %}{% endblock %}"><i class="bi bi-grid"></i> Dashboard</a>
+<a href="{% url 'maid-requests' %}" class="dg-nav-link {% block m_nav_req %}{% endblock %}"><i class="bi bi-bell"></i> New Requests <span class="dg-nav-badge" id="reqBadge" hidden>0</span></a>
+<a href="{% url 'maid-jobs' %}" class="dg-nav-link {% block m_nav_jobs %}{% endblock %}"><i class="bi bi-check-circle"></i> Accepted Jobs</a>
+<a href="{% url 'maid-navigation' %}" class="dg-nav-link {% block m_nav_nav %}{% endblock %}"><i class="bi bi-geo-alt"></i> Navigation</a>
+</div>
+<div class="dg-nav-section"><div class="dg-nav-section-title">Earnings</div>
+<a href="{% url 'maid-earnings' %}" class="dg-nav-link {% block m_nav_earn %}{% endblock %}"><i class="bi bi-cash-stack"></i> Earnings</a>
+<a href="{% url 'maid-reviews' %}" class="dg-nav-link {% block m_nav_rev %}{% endblock %}"><i class="bi bi-star"></i> Reviews</a>
+</div>
+<div class="dg-nav-section"><div class="dg-nav-section-title">Account</div>
+<a href="{% url 'maid-profile-settings' %}" class="dg-nav-link {% block m_nav_prof %}{% endblock %}"><i class="bi bi-person"></i> Profile</a>
+<form method="POST" action="{% url 'logout' %}" class="d-inline">
+{% csrf_token %}
+<button type="submit" class="dg-nav-link w-100 text-start border-0 bg-transparent" style="cursor:pointer"><i class="bi bi-box-arrow-left"></i> Logout</button>
+</form>
+</div>
+</nav>
+</aside>
+<main class="dg-main">
+<header class="dg-topbar">
+<div class="dg-topbar-left"><button class="dg-sidebar-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><h1 class="dg-topbar-title">{% block page_title %}Dashboard{% endblock %}</h1></div>
+<div class="dg-topbar-right">
+<div class="d-flex align-items-center gap-2 me-2"><span class="small fw-bold" id="availLabel" style="color:var(--success)">Available</span><label class="dg-toggle"><input type="checkbox" checked id="availToggle"><span class="dg-toggle-slider"></span></label></div>
+<button class="dg-topbar-btn" title="Notifications" id="notifBtn"><i class="bi bi-bell"></i><span class="notification-count" data-notification-count hidden>0</span></button>
+<form method="POST" action="{% url 'logout' %}" class="m-0">
+{% csrf_token %}
+<button type="submit" class="btn-premium-outline btn-premium-sm"><i class="bi bi-box-arrow-right"></i> Logout</button>
+</form>
+<img src="https://ui-avatars.com/api/?name={{ user.first_name|default:'M' }}+{{ user.last_name|default:'aid' }}&background=7c3aed&color=fff&size=80" class="dg-topbar-avatar">
+</div>
+</header>
+<div class="dg-content">{% block content %}{% endblock %}</div>
+</main>
+</div>
+<script>
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('show');document.getElementById('sidebarOverlay').classList.toggle('show');}
+document.getElementById('availToggle')?.addEventListener('change',async function(){
+document.getElementById('availLabel').textContent=this.checked?'Available':'Offline';
+document.getElementById('availLabel').style.color=this.checked?'var(--success)':'var(--gray-400)';
+const response = await DG.api('/accounts/maid-profile/', {method:'PATCH', body:JSON.stringify({is_available:this.checked})});
+if(!response || response.error){DG.toast('Availability not saved', response?.error || 'Please try again.', 'error');}
+});
+</script>
+{% endblock %}

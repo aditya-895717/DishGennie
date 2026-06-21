@@ -1,0 +1,56 @@
+{% extends "maid/base_maid.html" %}
+{% block m_nav_jobs %}active{% endblock %}
+{% block page_title %}Accepted Jobs{% endblock %}
+{% block content %}
+<div class="row g-4" id="jobsGrid"></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function statusLabel(status) {
+    return (status || '').replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function emptyJobs() {
+    return '<div class="col-12"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-calendar-check"></i></div><h5 class="empty-state-title">No active jobs</h5><p class="empty-state-text">Accepted bookings will appear here.</p></div></div>';
+}
+
+function jobCard(booking) {
+    const canComplete = booking.status === 'in_progress';
+    return `
+        <div class="col-lg-6 animate-fade-in-up">
+            <div class="booking-card">
+                <div class="booking-card-header"><div><div class="booking-card-id">Booking #DG${String(booking.id).padStart(4, '0')}</div><h5 class="mt-1 mb-1" style="font-size:1rem;font-weight:700">${booking.service_name || 'Home Service'}</h5></div><span class="status-badge ${booking.status}">${statusLabel(booking.status)}</span></div>
+                <div class="d-flex align-items-center gap-3 mt-3 p-3 rounded-3" style="background:var(--gray-50)">
+                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(booking.customer_name || 'Customer')}&background=e2e8f0&color=475569&size=80" class="rounded-3" width="44" height="44">
+                    <div><div class="fw-bold small">${booking.customer_name || 'Customer'}</div><div class="text-muted" style="font-size:.78rem"><i class="bi bi-geo-alt me-1"></i>${booking.address || 'Address pending'}</div></div>
+                    <div class="ms-auto fw-bold" style="color:var(--primary)">${DG.formatCurrency(booking.final_amount || booking.total_amount || 0)}</div>
+                </div>
+                <div class="d-flex gap-2 mt-3 flex-wrap">
+                    <a href="/maid-panel/navigation/?booking_id=${booking.id}" class="btn-premium flex-fill justify-content-center" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)"><i class="bi bi-geo-alt"></i> Navigate</a>
+                    <button class="btn-premium-outline flex-fill justify-content-center" style="border-color:#7c3aed;color:#7c3aed" onclick="DG.toast('Call requested','Customer contact workflow is ready for integration.','info')"><i class="bi bi-telephone"></i> Call</button>
+                    ${canComplete ? `<button class="btn btn-outline-success flex-fill" onclick="completeJob(${booking.id})"><i class="bi bi-check2-circle"></i> Complete</button>` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+async function loadJobs() {
+    const data = await DG.api('/bookings/maid/active/');
+    const jobs = data?.results || data || [];
+    document.getElementById('jobsGrid').innerHTML = jobs.length ? jobs.map(jobCard).join('') : emptyJobs();
+}
+
+async function completeJob(bookingId) {
+    const response = await DG.api(`/bookings/${bookingId}/complete/`, { method: 'POST', body: JSON.stringify({}) });
+    if (response?.booking) {
+        DG.toast('Job completed', 'Your earnings have been updated.', 'success');
+        loadJobs();
+    } else {
+        DG.toast('Could not complete', response?.error || 'Start the service before completing it.', 'error');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadJobs);
+</script>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "admin_panel/base_admin.html" %}
+{% block a_nav_verify %}active{% endblock %}
+{% block page_title %}Maid Verification{% endblock %}
+{% block content %}
+<div class="row g-4" id="verificationGrid"></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function emptyVerification() {
+    return '<div class="col-12"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-shield-check"></i></div><h5 class="empty-state-title">No pending verifications</h5><p class="empty-state-text">New maid applications will appear here.</p></div></div>';
+}
+function applicantCard(profile) {
+    const user = profile.user || {};
+    const name = `${user.first_name || user.username || 'Applicant'} ${user.last_name || ''}`.trim();
+    return `<div class="col-lg-6 animate-fade-in-up" id="applicant-${profile.id}">
+        <div class="booking-card" style="border-left:4px solid var(--warning)">
+            <div class="booking-card-header"><div><span class="status-badge pending">Pending Review</span><h5 class="mt-2 mb-1" style="font-size:1.05rem;font-weight:700">${name}</h5><div class="small text-muted">Applied ${DG.formatDate(user.created_at)}</div></div></div>
+            <div class="d-flex align-items-center gap-3 mt-3 p-3 rounded-3" style="background:var(--gray-50)">
+                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f59e0b&color=fff&size=80" class="rounded-3" width="48" height="48">
+                <div class="flex-fill small"><div class="mb-1"><i class="bi bi-geo-alt me-1 text-muted"></i>${user.address || '-'}</div><div class="mb-1"><i class="bi bi-briefcase me-1 text-muted"></i>${profile.experience_years} yrs experience</div><div><i class="bi bi-telephone me-1 text-muted"></i>${user.phone || '-'}</div></div>
+            </div>
+            <div class="mt-3"><div class="small fw-bold mb-2">Documents Submitted:</div><div class="d-flex gap-2 flex-wrap"><span class="badge" style="background:var(--info-light);color:var(--info)"><i class="bi bi-file-earmark me-1"></i>Aadhaar</span><span class="badge" style="background:var(--info-light);color:var(--info)"><i class="bi bi-file-earmark me-1"></i>ID Proof</span></div></div>
+            <div class="mt-3"><label class="dg-label">Remarks</label><textarea class="dg-input" rows="2" id="remarks-${profile.id}" placeholder="Add verification remarks..." style="font-size:.85rem"></textarea></div>
+            <div class="d-flex gap-2 mt-3">
+                <button class="btn-premium flex-fill justify-content-center" style="background:linear-gradient(135deg,#10b981,#059669)" onclick="verifyMaid(${profile.id}, 'approve')"><i class="bi bi-check-circle"></i> Approve</button>
+                <button class="btn btn-outline-danger flex-fill" onclick="verifyMaid(${profile.id}, 'reject')"><i class="bi bi-x-circle"></i> Reject</button>
+            </div>
+        </div></div>`;
+}
+async function loadVerification() {
+    const data = await DG.api('/accounts/admin/maids/?status=pending');
+    const applicants = data?.results || data || [];
+    document.getElementById('verificationGrid').innerHTML = applicants.length ? applicants.map(applicantCard).join('') : emptyVerification();
+}
+async function verifyMaid(profileId, action) {
+    const remarks = document.getElementById(`remarks-${profileId}`).value.trim();
+    const response = await DG.api(`/accounts/admin/verify/${profileId}/`, { method: 'POST', body: JSON.stringify({ action, remarks }) });
+    if (response?.status) {
+        DG.toast(action === 'approve' ? 'Maid approved' : 'Maid rejected', `Status is now ${response.status}.`, 'success');
+        loadVerification();
+    } else {
+        DG.toast('Verification failed', response?.error || 'Try again.', 'error');
+    }
+}
+document.addEventListener('DOMContentLoaded', loadVerification);
+</script>
+{% endblock %}

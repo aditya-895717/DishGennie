@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Verify Email{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/signup.css' %}">
+<style>
+.otp-inputs { display:flex; gap:8px; justify-content:center; margin:24px 0; }
+.otp-inputs input {
+    width:48px; height:56px; text-align:center; font-size:1.5rem; font-weight:700;
+    border:2px solid var(--gray-200); border-radius:var(--radius-sm);
+    transition:all .2s; outline:none; background:#fff;
+}
+.otp-inputs input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(13,99,86,.15); }
+.otp-inputs input.filled { border-color:var(--primary); background:var(--primary-50); }
+.resend-timer { color:var(--gray-400); font-size:.85rem; }
+.resend-timer a { color:var(--primary); font-weight:600; cursor:pointer; text-decoration:none; }
+.resend-timer a.disabled { color:var(--gray-300); pointer-events:none; }
+.email-badge {
+    display:inline-flex; align-items:center; gap:6px; background:var(--primary-50);
+    color:var(--primary); padding:6px 14px; border-radius:20px; font-size:.85rem; font-weight:600;
+}
+</style>
+{% endblock %}
+{% block body %}
+<div class="auth-page" data-theme="{% if reg_type == 'maid' %}maid{% else %}user{% endif %}">
+<div class="auth-left">
+<h1 class="animate-fade-in-up">Verify Your Email</h1>
+<p class="animate-fade-in-up stagger-1">We've sent a 6-digit code to your email. Enter it below to complete your registration.</p>
+</div>
+<div class="auth-right">
+<div class="auth-form-container animate-fade-in-up">
+<div class="auth-brand"><div class="auth-brand-icon"><i class="bi bi-shield-check"></i></div><h2>Dish<span>Gennie</span></h2></div>
+<h3>Email Verification 📧</h3>
+<p>Enter the 6-digit code sent to</p>
+<div class="text-center mb-3"><span class="email-badge"><i class="bi bi-envelope-fill"></i> {{ email }}</span></div>
+
+{% if messages %}
+{% for message in messages %}
+<div class="dg-alert dg-alert-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}">
+<i class="bi bi-{% if message.tags == 'error' %}exclamation-circle-fill{% elif message.tags == 'success' %}check-circle-fill{% else %}info-circle-fill{% endif %}"></i>
+{{ message }}
+</div>
+{% endfor %}
+{% endif %}
+
+<form method="POST" action="{% url 'verify-otp' %}" id="otpForm">
+{% csrf_token %}
+<input type="hidden" name="otp" id="otpHidden">
+<input type="hidden" name="action" value="verify">
+
+<div class="otp-inputs" id="otpInputs">
+    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="0" autofocus>
+    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="1">
+    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="2">
+    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="3">
+    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="4">
+    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-index="5">
+</div>
+
+<button type="submit" class="btn-premium w-100 justify-content-center btn-premium-lg" id="verifyBtn">
+    <i class="bi bi-check-circle-fill"></i> Verify & Create Account
+</button>
+</form>
+
+<div class="text-center mt-3 resend-timer">
+    <span id="timerText">Resend code in <strong id="countdown">30</strong>s</span>
+    <form method="POST" action="{% url 'verify-otp' %}" id="resendForm" style="display:none">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="resend">
+        <a id="resendLink" onclick="document.getElementById('resendForm').submit()">Resend Code</a>
+    </form>
+</div>
+
+<div class="text-center mt-3">
+    <a href="{% if reg_type == 'maid' %}{% url 'maid-register' %}{% else %}{% url 'signup' %}{% endif %}" class="text-muted small">
+        <i class="bi bi-arrow-left"></i> Back to Registration
+    </a>
+</div>
+</div></div></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('.otp-digit');
+    const hidden = document.getElementById('otpHidden');
+    const form = document.getElementById('otpForm');
+
+    function updateHidden() {
+        hidden.value = Array.from(inputs).map(i => i.value).join('');
+    }
+
+    inputs.forEach((input, idx) => {
+        input.addEventListener('input', function(e) {
+            const val = this.value.replace(/\D/g, '');
+            this.value = val.charAt(0) || '';
+            this.classList.toggle('filled', !!this.value);
+            updateHidden();
+            if (val && idx < inputs.length - 1) {
+                inputs[idx + 1].focus();
+            }
+            // Auto-submit when all 6 digits entered
+            if (hidden.value.length === 6) {
+                document.getElementById('verifyBtn').click();
+            }
+        });
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace' && !this.value && idx > 0) {
+                inputs[idx - 1].focus();
+                inputs[idx - 1].value = '';
+                inputs[idx - 1].classList.remove('filled');
+                updateHidden();
+            }
+        });
+        // Handle paste
+        input.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+            pasted.split('').forEach((ch, i) => {
+                if (inputs[i]) {
+                    inputs[i].value = ch;
+                    inputs[i].classList.add('filled');
+                }
+            });
+            updateHidden();
+            if (pasted.length === 6) {
+                inputs[5].focus();
+                setTimeout(() => document.getElementById('verifyBtn').click(), 200);
+            } else if (inputs[pasted.length]) {
+                inputs[pasted.length].focus();
+            }
+        });
+    });
+
+    // Countdown timer for resend
+    let seconds = 30;
+    const countdown = document.getElementById('countdown');
+    const timerText = document.getElementById('timerText');
+    const resendForm = document.getElementById('resendForm');
+    const timer = setInterval(() => {
+        seconds--;
+        countdown.textContent = seconds;
+        if (seconds <= 0) {
+            clearInterval(timer);
+            timerText.style.display = 'none';
+            resendForm.style.display = 'inline';
+        }
+    }, 1000);
+
+    // Button loading state
+    form.addEventListener('submit', function() {
+        const btn = document.getElementById('verifyBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
+    });
+});
+</script>
+{% endblock %}

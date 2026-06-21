@@ -1,0 +1,76 @@
+{% extends "user/base_user.html" %}
+{% block nav_support %}active{% endblock %}
+{% block page_title %}Support{% endblock %}
+{% block content %}
+<div class="row g-4">
+<div class="col-lg-8">
+<div class="chart-card mb-4"><div class="chart-card-header"><div class="chart-card-title">Create Support Ticket</div></div>
+<form id="ticketForm">
+<div class="mb-3"><label class="dg-label">Subject</label><input type="text" class="dg-input" id="ticketSubject" placeholder="What do you need help with?" required></div>
+<div class="mb-3"><label class="dg-label">Related Booking (Optional)</label><select class="dg-input" id="ticketBooking"><option value="">None</option></select></div>
+<div class="mb-3"><label class="dg-label">Priority</label><select class="dg-input" id="ticketPriority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>
+<div class="mb-3"><label class="dg-label">Description</label><textarea class="dg-input" rows="4" id="ticketDescription" placeholder="Describe your issue..." required></textarea></div>
+<button type="submit" class="btn-premium"><i class="bi bi-send me-1"></i> Submit Ticket</button>
+</form></div>
+<div class="chart-card">
+<div class="chart-card-header"><div class="chart-card-title">Your Tickets</div></div>
+<div id="ticketList" class="d-grid gap-2"></div>
+</div>
+</div>
+<div class="col-lg-4">
+<div class="glass-card mb-3"><h6 class="fw-bold mb-3"><i class="bi bi-question-circle me-2 text-primary"></i>FAQs</h6>
+<div class="accordion accordion-flush" id="faqAcc">
+<div class="accordion-item bg-transparent border-0"><h2 class="accordion-header"><button class="accordion-button collapsed bg-transparent px-0 py-2 small fw-bold" data-bs-toggle="collapse" data-bs-target="#faq1">How do I cancel a booking?</button></h2><div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAcc"><div class="accordion-body px-0 py-1 small text-muted">Go to My Bookings and click Cancel on any pending or accepted booking.</div></div></div>
+<div class="accordion-item bg-transparent border-0"><h2 class="accordion-header"><button class="accordion-button collapsed bg-transparent px-0 py-2 small fw-bold" data-bs-toggle="collapse" data-bs-target="#faq2">Are maids background verified?</button></h2><div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAcc"><div class="accordion-body px-0 py-1 small text-muted">Approved maids pass document review before appearing in Find Maid.</div></div></div>
+<div class="accordion-item bg-transparent border-0"><h2 class="accordion-header"><button class="accordion-button collapsed bg-transparent px-0 py-2 small fw-bold" data-bs-toggle="collapse" data-bs-target="#faq3">How do refunds work?</button></h2><div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAcc"><div class="accordion-body px-0 py-1 small text-muted">Wallet credits appear immediately after an approved support action.</div></div></div>
+</div></div>
+<div class="glass-card"><h6 class="fw-bold mb-3"><i class="bi bi-headset me-2 text-primary"></i>Contact Us</h6><p class="small text-muted mb-2"><i class="bi bi-envelope me-2"></i>support@dishgennie.com</p><p class="small text-muted mb-2"><i class="bi bi-telephone me-2"></i>1800-123-4567</p><p class="small text-muted mb-0"><i class="bi bi-clock me-2"></i>24/7 Available</p></div>
+</div></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function emptyTickets() {
+    return '<div class="empty-state"><div class="empty-state-icon"><i class="bi bi-ticket"></i></div><h5 class="empty-state-title">No tickets yet</h5><p class="empty-state-text">Create a ticket when you need help.</p></div>';
+}
+
+async function loadSupportData() {
+    const [bookingsData, ticketsData] = await Promise.all([
+        DG.api('/bookings/'),
+        DG.api('/support/tickets/'),
+    ]);
+    const bookings = bookingsData?.results || bookingsData || [];
+    const tickets = ticketsData?.results || ticketsData || [];
+    document.getElementById('ticketBooking').innerHTML = '<option value="">None</option>' + bookings.map(booking => `<option value="${booking.id}">#DG${String(booking.id).padStart(4, '0')} - ${booking.service_name || 'Service'}</option>`).join('');
+    document.getElementById('ticketList').innerHTML = tickets.length ? tickets.map(ticket => `
+        <div class="p-3 rounded-3" style="background:var(--gray-50)">
+            <div class="d-flex justify-content-between gap-3">
+                <div><div class="fw-bold small">${ticket.subject}</div><div class="small text-muted">${ticket.description}</div></div>
+                <span class="status-badge ${ticket.status === 'open' ? 'pending' : ticket.status}">${ticket.status.replace('_', ' ')}</span>
+            </div>
+        </div>
+    `).join('') : emptyTickets();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadSupportData();
+    document.getElementById('ticketForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const payload = {
+            subject: document.getElementById('ticketSubject').value.trim(),
+            description: document.getElementById('ticketDescription').value.trim(),
+            priority: document.getElementById('ticketPriority').value,
+        };
+        const booking = document.getElementById('ticketBooking').value;
+        if (booking) payload.booking = booking;
+        const response = await DG.api('/support/tickets/', { method: 'POST', body: JSON.stringify(payload) });
+        if (response?.id) {
+            this.reset();
+            DG.toast('Ticket created', 'Support will respond from your ticket list.', 'success');
+            loadSupportData();
+        } else {
+            DG.toast('Ticket not created', response?.error || 'Please fill out the ticket details.', 'error');
+        }
+    });
+});
+</script>
+{% endblock %}

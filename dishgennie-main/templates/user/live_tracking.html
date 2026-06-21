@@ -1,0 +1,114 @@
+{% extends "user/base_user.html" %}
+{% block page_title %}Live Tracking{% endblock %}
+{% block content %}
+<div class="row g-4">
+<div class="col-lg-8"><div class="chart-card" style="padding:0;overflow:hidden"><div id="trackingMap" style="height:500px;border-radius:var(--radius-lg)"></div></div></div>
+<div class="col-lg-4">
+<div class="glass-card mb-3">
+<div class="d-flex align-items-center gap-3 mb-3">
+<img id="trackingMaidAvatar" src="https://ui-avatars.com/api/?name=Maid&background=0d9488&color=fff&size=100" class="rounded-3" width="56" height="56" alt="Maid">
+<div><h5 class="mb-0" style="font-weight:700" id="trackingMaidName">Loading...</h5><div class="small text-muted" id="trackingService"><i class="bi bi-star-fill text-warning"></i> Home Service</div></div>
+</div>
+<div class="d-flex align-items-center gap-2 p-3 rounded-3 mb-3" style="background:var(--primary-50)">
+<i class="bi bi-geo-alt-fill fs-4" style="color:var(--primary)"></i>
+<div><div class="fw-bold small" style="color:var(--primary)" id="trackingStatus">Checking status</div><div class="small text-muted" id="trackingEta">ETA updates after maid assignment</div></div>
+</div>
+<div class="mb-3"><div class="d-flex justify-content-between small mb-1"><span>Booking</span><span class="fw-bold" id="trackingRef">#DG----</span></div><div class="progress" style="height:6px"><div class="progress-bar" id="trackingProgress" style="width:15%;background:var(--gradient-primary)"></div></div></div>
+<div class="p-3 rounded-3 text-center" style="background:var(--gray-50)"><div class="small text-muted mb-1">Service OTP</div><div class="fw-bold fs-3 text-primary letter-spacing-2" style="letter-spacing:8px" id="trackingOtp">------</div><div class="small text-muted">Share this OTP when the maid arrives</div></div>
+</div>
+<div class="d-flex gap-2">
+<button type="button" class="btn-premium flex-fill justify-content-center" id="callBtn"><i class="bi bi-telephone"></i> Call</button>
+<button type="button" class="btn-premium-outline flex-fill justify-content-center" id="chatBtn"><i class="bi bi-chat"></i> Chat</button>
+</div>
+</div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const trackingBookingId = {{ booking_id }};
+let trackingBooking = null;
+
+function statusText(status) {
+    const labels = {
+        pending: 'Finding a maid',
+        accepted: 'Maid assigned',
+        en_route: 'Maid en route',
+        in_progress: 'Service in progress',
+        completed: 'Service completed',
+        cancelled: 'Booking cancelled',
+    };
+    return labels[status] || 'Checking status';
+}
+
+function progressForStatus(status) {
+    return {
+        pending: 15,
+        accepted: 40,
+        en_route: 65,
+        in_progress: 85,
+        completed: 100,
+        cancelled: 100,
+    }[status] || 15;
+}
+
+async function sendTrackingChat() {
+    if (!trackingBooking) return;
+    const maidName = trackingBooking.maid_name || 'the maid';
+    const message = window.prompt(`Message ${maidName} about booking #DG${String(trackingBooking.id).padStart(4, '0')}:`);
+    if (!message || !message.trim()) return;
+    const response = await DG.api('/support/tickets/', {
+        method: 'POST',
+        body: JSON.stringify({
+            booking: trackingBooking.id,
+            subject: `Chat for Booking #DG${String(trackingBooking.id).padStart(4, '0')}`,
+            description: message.trim(),
+            priority: 'medium',
+        }),
+    });
+    if (response?.error) {
+        DG.toast('Chat not sent', response.error, 'error');
+        return;
+    }
+    DG.toast('Message sent', 'Your chat request is linked to this booking.', 'success');
+}
+
+function loadMap() {
+    if (!window.L) {
+        document.getElementById('trackingMap').innerHTML = '<div class="empty-state h-100"><div class="empty-state-icon"><i class="bi bi-map"></i></div><h5 class="empty-state-title">Map unavailable</h5><p class="empty-state-text">Tracking details are still available on the right.</p></div>';
+        return;
+    }
+    const customerLat = Number(trackingBooking?.latitude || 19.076);
+    const customerLng = Number(trackingBooking?.longitude || 72.8777);
+    const maidLat = customerLat + 0.006;
+    const maidLng = customerLng - 0.006;
+    const map = L.map('trackingMap').setView([customerLat, customerLng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+    const maidIcon = L.divIcon({className:'',html:'<div style="background:var(--gradient-primary);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 4px 12px rgba(0,0,0,0.3);border:3px solid #fff"><i class="bi bi-person-fill"></i></div>',iconSize:[36,36],iconAnchor:[18,18]});
+    const custIcon = L.divIcon({className:'',html:'<div style="background:#ef4444;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 4px 12px rgba(0,0,0,0.3);border:3px solid #fff"><i class="bi bi-house-fill"></i></div>',iconSize:[32,32],iconAnchor:[16,16]});
+    L.marker([maidLat, maidLng],{icon:maidIcon}).addTo(map).bindPopup(`${trackingBooking?.maid_name || 'Maid'} is on the way`);
+    L.marker([customerLat, customerLng],{icon:custIcon}).addTo(map).bindPopup('Your location');
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    trackingBooking = await DG.api(`/bookings/${trackingBookingId}/`);
+    if (!trackingBooking || trackingBooking.error || !trackingBooking.id) {
+        DG.toast('Tracking unavailable', trackingBooking?.error || 'Booking was not found for your account.', 'error');
+        document.getElementById('trackingMaidName').textContent = 'Booking not found';
+        return;
+    }
+
+    const maidName = trackingBooking.maid_name || 'Finding maid';
+    document.getElementById('trackingMaidName').textContent = maidName;
+    document.getElementById('trackingMaidAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(maidName)}&background=0d9488&color=fff&size=100`;
+    document.getElementById('trackingService').innerHTML = `<i class="bi bi-house-heart text-primary"></i> ${trackingBooking.service_name || 'Home Service'}`;
+    document.getElementById('trackingStatus').textContent = statusText(trackingBooking.status);
+    document.getElementById('trackingEta').textContent = trackingBooking.status === 'pending' ? 'We are assigning the best available maid.' : 'ETA: about 12 minutes';
+    document.getElementById('trackingRef').textContent = `#DG${String(trackingBooking.id).padStart(4, '0')}`;
+    document.getElementById('trackingProgress').style.width = `${progressForStatus(trackingBooking.status)}%`;
+    document.getElementById('trackingOtp').textContent = String(trackingBooking.otp || '').split('').join(' ');
+    document.getElementById('callBtn').addEventListener('click', () => DG.toast('Call requested', 'Phone support will connect you with the assigned maid.', 'info'));
+    document.getElementById('chatBtn').addEventListener('click', sendTrackingChat);
+    loadMap();
+});
+</script>
+{% endblock %}

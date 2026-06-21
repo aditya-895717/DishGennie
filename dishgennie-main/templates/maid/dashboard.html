@@ -1,0 +1,137 @@
+{% extends "maid/base_maid.html" %}
+{% block m_nav_dash %}active{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<!-- Verification Banner (shown if pending) -->
+<div id="verificationBanner" hidden class="kpi-card mb-4 animate-fade-in-up" style="border-left:4px solid var(--warning);background:linear-gradient(135deg,#fefce8,#fef9c3)">
+<div class="d-flex align-items-center gap-3 p-2">
+<div style="width:48px;height:48px;border-radius:var(--radius-sm);background:rgba(245,158,11,.15);display:flex;align-items:center;justify-content:center">
+<i class="bi bi-hourglass-split" style="font-size:1.4rem;color:#f59e0b"></i>
+</div>
+<div>
+<h5 class="mb-1" style="font-size:1rem;font-weight:700;color:#92400e">Verification Pending</h5>
+<p class="mb-0 small" style="color:#a16207">Your profile is being reviewed by the admin. You'll be visible to customers once approved.</p>
+</div>
+</div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4 align-items-stretch">
+  <div class="col-6 col-lg-3 animate-fade-in-up stagger-1">
+    <div class="kpi-card h-100">
+      <div class="kpi-card-icon violet"><i class="bi bi-cash-stack"></i></div>
+      <div class="kpi-card-value" id="kpiEarnings">₹0</div>
+      <div class="kpi-card-label">Total Earnings</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3 animate-fade-in-up stagger-2">
+    <div class="kpi-card h-100">
+      <div class="kpi-card-icon emerald"><i class="bi bi-check-circle"></i></div>
+      <div class="kpi-card-value" id="kpiJobs">0</div>
+      <div class="kpi-card-label">Jobs Completed</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3 animate-fade-in-up stagger-3">
+    <div class="kpi-card h-100">
+      <div class="kpi-card-icon amber"><i class="bi bi-star"></i></div>
+      <div class="kpi-card-value" id="kpiRating">—</div>
+      <div class="kpi-card-label">Avg Rating</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3 animate-fade-in-up stagger-4">
+    <div class="kpi-card h-100">
+      <div class="kpi-card-icon blue"><i class="bi bi-chat-square-text"></i></div>
+      <div class="kpi-card-value" id="kpiReviews">0</div>
+      <div class="kpi-card-label">Total Reviews</div>
+    </div>
+  </div>
+</div>
+
+<!-- Active Jobs -->
+<div class="chart-card mb-4 animate-fade-in-up stagger-5">
+  <div class="chart-card-header">
+    <div class="chart-card-title">Active Jobs</div>
+    <a href="{% url 'maid-jobs' %}" class="small fw-bold" style="color:var(--primary)">View All →</a>
+  </div>
+  <div id="activeJobsContainer">
+    <div class="empty-state">
+      <div class="empty-state-icon"><i class="bi bi-briefcase"></i></div>
+      <div class="empty-state-title">No active jobs</div>
+      <div class="empty-state-text">Check new requests for available bookings.</div>
+      <a href="{% url 'maid-requests' %}" class="btn-premium btn-premium-sm mt-2"><i class="bi bi-bell me-1"></i>View Requests</a>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Completed -->
+<div class="chart-card animate-fade-in-up stagger-6">
+  <div class="chart-card-header"><div class="chart-card-title">Recent Activity</div></div>
+  <div id="recentActivity">
+    <div class="text-center py-4 text-muted small">
+      <i class="bi bi-clock-history d-block mb-2" style="font-size:2rem;opacity:.3"></i>
+      No recent activity yet.
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    // Fetch maid profile data
+    try {
+        const profile = await DG.api('/accounts/maid-profile/');
+        if (profile && !profile.detail) {
+            document.getElementById('kpiEarnings').textContent = DG.formatCurrency(profile.total_earnings || 0);
+            document.getElementById('kpiJobs').textContent = profile.total_jobs || 0;
+            document.getElementById('kpiRating').textContent = Number(profile.avg_rating || 0).toFixed(1);
+            document.getElementById('kpiReviews').textContent = profile.total_reviews || 0;
+
+            // Show verification banner if pending
+            if (profile.verification_status === 'pending' || profile.verification_status === 'under_review') {
+                document.getElementById('verificationBanner').hidden = false;
+            }
+        }
+    } catch(e) { console.log('Profile load:', e); }
+
+    // Fetch active jobs
+    try {
+        const data = await DG.api('/bookings/maid/active/');
+        const jobs = DG.asList(data);
+        if (jobs.length > 0) {
+            document.getElementById('activeJobsContainer').innerHTML = jobs.map(b => `
+                <div class="d-flex align-items-center gap-3 mb-3 pb-3" style="border-bottom:1px solid var(--gray-100)">
+                    <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--primary-50);display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-calendar-check" style="color:var(--primary)"></i>
+                    </div>
+                    <div class="flex-fill">
+                        <div class="fw-bold small">${b.service_name || 'Service'}</div>
+                        <div class="text-muted" style="font-size:.75rem">${b.customer_name || 'Customer'} • ${b.address ? b.address.substring(0,30)+'...' : ''}</div>
+                    </div>
+                    <div class="text-end">
+                        <span class="fw-bold small" style="color:var(--primary)">${DG.formatCurrency(b.final_amount)}</span>
+                        <div><span class="status-badge ${b.status}">${b.status.replace('_',' ')}</span></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch(e) { console.log('Active jobs load:', e); }
+
+    // Fetch recent bookings
+    try {
+        const data = await DG.api('/bookings/');
+        const bookings = DG.asList(data);
+        if (bookings.length > 0) {
+            document.getElementById('recentActivity').innerHTML = `
+                <table class="dg-table"><thead><tr><th>Customer</th><th>Service</th><th>Amount</th><th>Status</th></tr></thead>
+                <tbody>${bookings.slice(0,5).map(b => `
+                    <tr><td class="fw-bold small">${b.customer_name || 'Customer'}</td>
+                    <td>${b.service_name || 'Service'}</td>
+                    <td class="fw-bold">${DG.formatCurrency(b.final_amount)}</td>
+                    <td><span class="status-badge ${b.status}">${b.status.replace('_',' ')}</span></td></tr>
+                `).join('')}</tbody></table>`;
+        }
+    } catch(e) { console.log('Recent activity load:', e); }
+});
+</script>
+{% endblock %}

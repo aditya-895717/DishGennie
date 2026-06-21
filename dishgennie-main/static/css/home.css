@@ -1,0 +1,461 @@
+/*
+ * DishGennie — Home Page Styles (Solid Background Version)
+ * One solid background: #f2f4f5 across all sections.
+ * Color palette: gold, dark teal, light teal, light gray, very dark teal.
+ */
+
+:root {
+    --home-gold: #f2b359;
+    --home-dark-teal: #0a4545;
+    --home-light-teal: #b4edec;
+    --home-light-gray: #f2f4f5;
+    --home-very-dark-teal: #003535;
+}
+
+/* ═══════════════════════════════════════════
+   BASE & BODY — SOLID LIGHT GRAY
+   ═══════════════════════════════════════════ */
+body {
+    background: var(--home-light-gray);
+}
+
+/* ═══════════════════════════════════════════
+   NAVBAR — SOLID DARK TEAL
+   ═══════════════════════════════════════════ */
+.navbar-home {
+    background: var(--home-dark-teal);  /* solid, no gradient */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.navbar-home .navbar-brand {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: white !important;
+    letter-spacing: -0.5px;
+}
+
+.navbar-home .navbar-brand span {
+    color: var(--home-gold);
+}
+
+.navbar-home .nav-link {
+    color: rgb(170, 223, 222)!important;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all var(--transition-base);
+}
+
+.navbar-home .nav-link:hover {
+    color: var(--home-gold) !important;
+}
+
+/* ═══════════════════════════════════════════
+   HERO SECTION — FULL WIDTH & CENTERED CONTENT
+   ═══════════════════════════════════════════ */
+.hero-section {
+    background: var(--home-dark-teal);  /* solid */
+    color: #fff;
+    padding: 180px 0 100px;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+}
+.hero-search .btn-premium {
+    white-space: nowrap;
+    display: inline-block;  /* ensures the button respects nowrap */
+}
+
+/* decorative circles remain but don't create gradient */
+.hero-section::before {
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: rgba(180, 237, 236, 0.08);
+    border-radius: 50%;
+    top: -200px;
+    right: -100px;
+}
+
+.hero-section::after {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: rgba(242, 179, 89, 0.06);
+    border-radius: 50%;
+    bottom: -150px;
+    left: -100px;
+}
+
+/* Hero content — full width, centered */
+.hero-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1200px;      /* optional: limits content width on large screens */
+    margin: 0 auto;         /* centers the content block */
+    padding: 0 20px;        /* breathing room on small screens */
+    text-align: center;     /* centers text and inline children */
+}
+
+/* Title & subtitle — centered */
+.hero-title {
+    font-family: var(--font-display);
+    font-size: 3.2rem;
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    color: #ffffff;
+    text-align: center;
+}
+
+.hero-title span {
+    color: var(--home-gold);
+}
+
+.hero-subtitle {
+    font-size: 1.15rem;
+    opacity: 0.9;
+    margin-bottom: 32px;
+    max-width: 520px;
+    line-height: 1.6;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Search bar — centered block */
+.hero-search {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(180, 237, 236, 0.3);
+    border-radius: var(--radius-xl);
+    padding: 8px;
+    display: flex;
+    gap: 8px;
+    max-width: 1080px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.hero-search .form-control {
+    border: none;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: var(--radius-lg);
+    padding: 14px 20px;
+    font-size: 0.95rem;
+    color: var(--home-dark-teal);
+}
+
+.hero-search .form-control::placeholder {
+    color: #999;
+}
+
+.hero-search .btn-premium {
+    border-radius: var(--radius-lg);
+    padding: 14px 60px;
+    background: var(--home-gold);
+    border: none;
+    color: var(--home-very-dark-teal);
+    font-weight: 700;
+}
+
+.hero-search .btn-premium:hover {
+    background: #f0a940;
+    box-shadow: 0 8px 20px rgba(242, 179, 89, 0.3);
+}
+
+/* Stats — centered flex row */
+.hero-stats {
+    display: flex;
+    gap: 40px;
+    margin-top: 40px;
+    justify-content: center;
+}
+
+.hero-stat-value {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--home-gold);
+}
+
+.hero-stat-label {
+    font-size: 0.8rem;
+    opacity: 0.75;
+    margin-top: 4px;
+}
+
+/* ═══════════════════════════════════════════
+   SERVICES SECTION — SOLID VERY DARK TEAL
+   ═══════════════════════════════════════════ */
+.services-section {
+    padding: 80px 0;
+    background: var(--home-very-dark-teal);
+}
+
+.section-title {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 8px;
+    color: rgb(170, 223, 222);
+}
+
+.section-subtitle {
+    text-align: center;
+    color: #ffffff;
+    margin-bottom: 40px;
+    font-size: 1rem;
+}
+
+.service-card {
+    background: rgb(241, 255, 253);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(10, 69, 69, 0.08);
+    border: 1px solid rgba(180, 237, 236, 0.3);
+    transition: all var(--transition-base);
+    cursor: pointer;
+}
+
+.service-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 32px rgba(10, 69, 69, 0.15);
+    border-color: var(--home-very-dark-teal);
+}
+
+.service-card-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-lg);
+    background: rgb(170, 223, 222);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    color: var(--home-dark-teal);
+    margin: 0 auto 16px;
+}
+
+.service-card h5 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--home-very-dark-teal);
+}
+
+.service-card p {
+    font-size: 0.82rem;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.service-card-price {
+    font-weight: 700;
+    color: rgb(0, 151, 0);
+    font-size: 0.9rem;
+}
+
+/* ═══════════════════════════════════════════
+   TRUST SECTION — SOLID VERY DARK TEAL
+   ═══════════════════════════════════════════ */
+.trust-section {
+    padding: 60px 0;
+    background: var(--home-very-dark-teal);
+}
+
+.trust-section .section-title,
+.trust-section .section-subtitle {
+    color: white;
+}
+
+.trust-section .section-subtitle {
+    color: rgba(255,255,255,0.8);
+}
+
+.trust-card {
+    text-align: center;
+    padding: 32px 24px;
+    background: rgba(0, 180, 162, 0.3);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(180, 237, 236, 0.3);
+    transition: all var(--transition-base);
+}
+
+.trust-card i {
+    font-size: 2.4rem;
+    color: rgb(94, 255, 209);
+    margin-bottom: 12px;
+}
+
+.trust-card h5 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: rgb(94, 255, 209);
+}
+
+.trust-card p {
+    font-size: 0.85rem;
+    color: whitesmoke;
+    line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════
+   CTA SECTION — SOLID VERY DARK TEAL
+   ═══════════════════════════════════════════ */
+.cta-section {
+    background: var(--home-very-dark-teal);
+    padding: 60px 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-section::before {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: rgba(242, 179, 89, 0.05);
+    border-radius: 50%;
+    top: -150px;
+    right: -150px;
+}
+
+.cta-section h2 {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+    color: white;
+}
+
+.cta-section p {
+    opacity: 0.85;
+    margin-bottom: 28px;
+    font-size: 1.05rem;
+    position: relative;
+    z-index: 1;
+    color: #ffffff;
+}
+
+.cta-section .btn-premium {
+    background: var(--home-gold);
+    border: none;
+    color: var(--home-very-dark-teal);
+    font-weight: 700;
+    padding: 16px 40px;
+    font-size: 1rem;
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-base);
+    position: relative;
+    z-index: 1;
+}
+
+.cta-section .btn-premium:hover {
+    background: #f0a940;
+    box-shadow: 0 12px 32px rgba(242, 179, 89, 0.4);
+    transform: translateY(-2px);
+}
+
+/* ═══════════════════════════════════════════
+   FOOTER — SOLID VERY DARK TEAL
+   ═══════════════════════════════════════════ */
+footer {
+    background: var(--home-very-dark-teal) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    padding: 48px 0 24px;
+}
+
+footer h5, footer h6 {
+    color: var(--home-gold) !important;
+}
+
+footer h5 i {
+    color: var(--home-gold) !important;
+}
+
+footer .text-muted {
+    color: rgba(255, 255, 255, 0.6) !important;
+    transition: all var(--transition-base);
+}
+
+footer a.text-muted:hover {
+    color: var(--home-gold) !important;
+}
+
+footer hr {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    margin: 32px 0 16px;
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATIONS (unchanged)
+   ═══════════════════════════════════════════ */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+
+    .hero-search {
+        flex-direction: column;
+    }
+
+    .hero-search .form-control,
+    .hero-search .btn-premium {
+        width: 100%;
+    }
+
+    .hero-stats {
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+    }
+
+    .cta-section h2 {
+        font-size: 1.6rem;
+    }
+}

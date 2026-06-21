@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Environment Variables
+.env
+
+# Database
+db.sqlite3
+db.sqlite3-journal
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Static files collected
+staticfiles/
+static_collected/
+
+# Media uploads
+media/
+
+# Logs
+*.log
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+
+# Distribution
+dist/
+build/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Antigravity/Gemini
+.antigravityignore
+.gemini/
+setup_fresh.py

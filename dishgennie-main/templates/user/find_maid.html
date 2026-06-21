@@ -1,0 +1,97 @@
+{% extends "user/base_user.html" %}
+{% block nav_find %}active{% endblock %}
+{% block page_title %}Find a Maid{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+<div class="col-md-4"><input type="text" class="dg-input" id="searchCity" placeholder="Search by city..."></div>
+<div class="col-md-3"><select class="dg-input" id="filterService"><option value="">All Services</option><option value="Cleaning">Cleaning</option><option value="Cooking">Cooking</option><option value="Laundry">Laundry</option><option value="Baby Care">Baby Care</option><option value="Elder Care">Elder Care</option><option value="Deep Cleaning">Deep Cleaning</option></select></div>
+<div class="col-md-2"><select class="dg-input" id="filterRating"><option value="">Min Rating</option><option value="4">4 and above</option><option value="3">3 and above</option></select></div>
+<div class="col-md-3"><select class="dg-input" id="sortBy"><option value="-avg_rating">Top Rated</option><option value="hourly_rate">Price: Low to High</option><option value="-hourly_rate">Price: High to Low</option><option value="-total_jobs">Most Jobs</option></select></div>
+</div>
+<div class="row g-4" id="maidGrid">
+<div class="col-12">
+<div class="empty-state"><div class="empty-state-icon"><i class="bi bi-hourglass-split"></i></div><h5 class="empty-state-title">Finding available maids</h5><p class="empty-state-text">Loading verified partners near you.</p></div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function maidCard(maid) {
+    const name = maid.name || 'Verified Maid';
+    const skills = (maid.skills || []).slice(0, 3);
+    const avatar = maid.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0d9488&color=fff&size=136&bold=true`;
+    const city = maid.city_name || 'Nearby';
+    const rating = Number(maid.avg_rating || 0).toFixed(1);
+    const reviews = maid.total_reviews || 0;
+    const jobs = maid.total_jobs || 0;
+    const bookingUrl = `/book/?maid_profile=${maid.id}`;
+
+    return `
+        <div class="col-md-6 col-lg-4 animate-fade-in-up">
+            <div class="maid-card">
+                <div class="maid-card-header">
+                    <img src="${avatar}" class="maid-card-avatar" alt="${name}">
+                    <div class="maid-card-info">
+                        <h5>${name}</h5>
+                        <div class="maid-card-rating"><i class="bi bi-star-fill"></i><strong>${rating}</strong><span class="ms-1">(${reviews} reviews)</span></div>
+                        <div class="small text-muted mt-1"><i class="bi bi-geo-alt me-1"></i>${city} • ${maid.experience_years || 0} yrs exp</div>
+                    </div>
+                    <span class="maid-card-verified"><i class="bi bi-patch-check-fill"></i> Verified</span>
+                </div>
+                <div class="maid-card-body">
+                    <div class="maid-card-skills">
+                        ${skills.length ? skills.map(skill => `<span class="maid-card-skill-badge">${skill}</span>`).join('') : '<span class="maid-card-skill-badge">Home Help</span>'}
+                    </div>
+                    <p class="small text-muted mb-0">${maid.bio || `Completed ${jobs} jobs and available for new bookings.`}</p>
+                </div>
+                <div class="maid-card-meta">
+                    <div class="maid-card-price">${DG.formatCurrency(maid.hourly_rate || 0)}<span>/hr</span></div>
+                    <a href="${bookingUrl}" class="btn-premium btn-premium-sm"><i class="bi bi-lightning-charge-fill"></i> Book Now</a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function emptyMaidState() {
+    return `
+        <div class="col-12">
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-person-x"></i></div>
+                <h5 class="empty-state-title">No maids match these filters</h5>
+                <p class="empty-state-text">Try another city, service, or rating filter.</p>
+            </div>
+        </div>
+    `;
+}
+
+async function loadMaids() {
+    const grid = document.getElementById('maidGrid');
+    const params = new URLSearchParams();
+    const city = document.getElementById('searchCity').value.trim();
+    const service = document.getElementById('filterService').value;
+    const minRating = document.getElementById('filterRating').value;
+    const ordering = document.getElementById('sortBy').value;
+
+    if (city) params.set('city', city);
+    if (service) params.set('service', service);
+    if (minRating) params.set('min_rating', minRating);
+    if (ordering) params.set('ordering', ordering);
+
+    const data = await DG.api(`/accounts/maids/?${params.toString()}`);
+    const maids = data?.results || data || [];
+    grid.innerHTML = maids.length ? maids.map(maidCard).join('') : emptyMaidState();
+    DG.init();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const reload = DG.debounce(loadMaids, 250);
+    ['searchCity', 'filterService', 'filterRating', 'sortBy'].forEach(id => {
+        const element = document.getElementById(id);
+        element.addEventListener(id === 'searchCity' ? 'input' : 'change', reload);
+    });
+    loadMaids();
+});
+</script>
+{% endblock %}

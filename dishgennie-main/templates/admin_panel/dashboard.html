@@ -1,0 +1,214 @@
+{% extends "admin_panel/base_admin.html" %}
+{% block a_nav_dash %}active{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-1"><div class="kpi-card"><div class="kpi-card-icon indigo"><i class="bi bi-people"></i></div><div class="kpi-card-value" id="kpiUsers">—</div><div class="kpi-card-label">Total Users</div></div></div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-2"><div class="kpi-card"><div class="kpi-card-icon violet"><i class="bi bi-person-badge"></i></div><div class="kpi-card-value" id="kpiMaids">—</div><div class="kpi-card-label">Total Maids</div></div></div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-3"><div class="kpi-card"><div class="kpi-card-icon emerald"><i class="bi bi-calendar-check"></i></div><div class="kpi-card-value" id="kpiBookings">—</div><div class="kpi-card-label">Active Bookings</div></div></div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-4"><div class="kpi-card kpi-card-gradient" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)"><div class="kpi-card-icon"><i class="bi bi-currency-rupee"></i></div><div class="kpi-card-value" id="kpiRevenue">—</div><div class="kpi-card-label">Monthly Revenue</div></div></div>
+</div>
+<div class="row g-4 mb-4">
+<div class="col-12 col-lg-8 animate-fade-in-up stagger-5"><div class="chart-card"><div class="chart-card-header"><div class="chart-card-title">Revenue & Bookings (30 Days)</div></div><div class="chart-wrapper chart-wrapper--line"><canvas id="revenueChart"></canvas></div><div id="chartEmpty" class="text-center py-4 text-muted small" hidden><i class="bi bi-bar-chart-line d-block mb-2" style="font-size:2rem;opacity:.3"></i>No booking data yet. Revenue chart will populate as bookings come in.</div></div></div>
+<div class="col-12 col-lg-4 animate-fade-in-up stagger-6"><div class="chart-card h-100"><div class="chart-card-title mb-3">Booking Status</div><div class="chart-wrapper chart-wrapper--doughnut"><canvas id="funnelChart"></canvas></div><div id="funnelEmpty" class="text-center py-4 text-muted small" hidden><i class="bi bi-pie-chart d-block mb-2" style="font-size:2rem;opacity:.3"></i>No bookings yet.</div></div></div>
+</div>
+<div class="row g-4 mb-4">
+<div class="col-12 col-lg-6 animate-fade-in-up stagger-1"><div class="chart-card h-100"><div class="chart-card-title mb-3">Service Distribution</div><div class="chart-wrapper chart-wrapper--polar"><canvas id="serviceChart"></canvas></div><div id="serviceEmpty" class="text-center py-4 text-muted small" hidden><i class="bi bi-grid d-block mb-2" style="font-size:2rem;opacity:.3"></i>No service data yet.</div></div></div>
+<div class="col-12 col-lg-6 animate-fade-in-up stagger-2"><div class="chart-card h-100"><div class="chart-card-title mb-3">City-wise Bookings</div><div id="cityStats"><div class="text-center py-4 text-muted small"><i class="bi bi-geo-alt d-block mb-2" style="font-size:2rem;opacity:.3"></i>No city data yet.</div></div></div></div>
+</div>
+<div class="row g-4">
+<div class="col-12 col-lg-6 animate-fade-in-up stagger-3"><div class="chart-card"><div class="chart-card-header"><div class="chart-card-title">Pending Verifications</div><a href="{% url 'admin-verification' %}" class="small fw-bold" style="color:var(--primary)">View All →</a></div>
+<div id="pendingList"><div class="text-center py-4 text-muted small"><i class="bi bi-shield-check d-block mb-2" style="font-size:2rem;opacity:.3"></i>No pending verifications.</div></div>
+</div></div>
+<div class="col-12 col-lg-6 animate-fade-in-up stagger-4"><div class="chart-card"><div class="chart-card-header"><div class="chart-card-title">Quick Stats</div></div>
+<div class="small">
+<div class="d-flex justify-content-between align-items-center p-3 mb-2 rounded-3" style="background:var(--gray-50)"><span class="fw-bold"><i class="bi bi-check-circle text-success me-2"></i>Completed Bookings</span><span class="fw-bold" id="statCompleted">0</span></div>
+<div class="d-flex justify-content-between align-items-center p-3 mb-2 rounded-3" style="background:var(--gray-50)"><span class="fw-bold"><i class="bi bi-calendar-check text-primary me-2"></i>Total Bookings</span><span class="fw-bold" id="statTotal">0</span></div>
+<div class="d-flex justify-content-between align-items-center p-3 mb-2 rounded-3" style="background:var(--gray-50)"><span class="fw-bold"><i class="bi bi-shield-check text-warning me-2"></i>Pending Verifications</span><span class="fw-bold" id="statPending">0</span></div>
+<div class="d-flex justify-content-between align-items-center p-3 mb-2 rounded-3" style="background:var(--gray-50)"><span class="fw-bold"><i class="bi bi-person-plus text-info me-2"></i>New Users (7 days)</span><span class="fw-bold" id="statNewUsers">0</span></div>
+</div></div></div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let revenueChartInstance = null;
+let funnelChartInstance = null;
+let serviceChartInstance = null;
+
+async function loadDashboard() {
+    // KPIs
+    const kpi = await DG.api('/admin-panel/dashboard/');
+    if (kpi && !kpi.detail) {
+        document.getElementById('kpiUsers').textContent = Number(kpi.total_users).toLocaleString('en-IN');
+        document.getElementById('kpiMaids').textContent = Number(kpi.total_maids).toLocaleString('en-IN');
+        document.getElementById('kpiBookings').textContent = Number(kpi.active_bookings).toLocaleString('en-IN');
+        const rev = Number(kpi.monthly_revenue);
+        document.getElementById('kpiRevenue').textContent = rev >= 100000
+            ? `₹${(rev/100000).toFixed(1)}L`
+            : DG.formatCurrency(rev);
+        document.getElementById('statCompleted').textContent = kpi.completed_bookings;
+        document.getElementById('statTotal').textContent = kpi.total_bookings;
+        document.getElementById('statPending').textContent = kpi.pending_verifications;
+        document.getElementById('statNewUsers').textContent = kpi.new_users_week;
+    }
+
+    // Revenue Chart (real data from API)
+    const chartData = await DG.api('/admin-panel/revenue-chart/');
+    if (chartData && Array.isArray(chartData)) {
+        const hasData = chartData.some(d => d.revenue > 0 || d.bookings > 0);
+        const chartCanvas = document.getElementById('revenueChart');
+        const chartEmpty = document.getElementById('chartEmpty');
+
+        if (!hasData) {
+            chartCanvas.parentElement.hidden = true;
+            chartEmpty.hidden = false;
+        } else {
+            chartCanvas.parentElement.hidden = false;
+            chartEmpty.hidden = true;
+            if (revenueChartInstance) revenueChartInstance.destroy();
+            revenueChartInstance = new Chart(chartCanvas, {
+                type: 'line',
+                data: {
+                    labels: chartData.map(d => {
+                        const dt = new Date(d.date);
+                        return `${dt.getDate()} ${dt.toLocaleString('en', {month:'short'})}`;
+                    }),
+                    datasets: [{
+                        label: 'Revenue (₹)',
+                        data: chartData.map(d => d.revenue),
+                        fill: true,
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79,70,229,0.08)',
+                        tension: 0.4, pointRadius: 2, borderWidth: 2
+                    },{
+                        label: 'Bookings',
+                        data: chartData.map(d => d.bookings),
+                        fill: false,
+                        borderColor: '#06b6d4',
+                        borderDash: [5,5],
+                        tension: 0.4, pointRadius: 2, borderWidth: 2,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: {intersect: false},
+                    plugins: {legend:{position:'top',labels:{usePointStyle:true,font:{size:11}}}},
+                    scales: {
+                        y: {beginAtZero:true, ticks:{callback:v=>'₹'+(v>=1000?(v/1000)+'K':v)}},
+                        y1: {position:'right', beginAtZero:true, grid:{display:false}},
+                        x: {grid:{display:false}, ticks:{maxTicksLimit:window.innerWidth < 768 ? 5 : 10, font:{size: window.innerWidth < 768 ? 9 : 11}}}
+                    }
+                }
+            });
+        }
+    }
+
+    // Booking status funnel (from bookings API)
+    const bookings = await DG.api('/bookings/');
+    const allBookings = DG.asList(bookings);
+    const funnelCanvas = document.getElementById('funnelChart');
+    const funnelEmpty = document.getElementById('funnelEmpty');
+
+    if (allBookings.length === 0) {
+        funnelCanvas.parentElement.hidden = true;
+        funnelEmpty.hidden = false;
+    } else {
+        funnelCanvas.parentElement.hidden = false;
+        funnelEmpty.hidden = true;
+        const completed = allBookings.filter(b => b.status === 'completed').length;
+        const inProgress = allBookings.filter(b => ['in_progress','en_route'].includes(b.status)).length;
+        const pending = allBookings.filter(b => ['pending','accepted'].includes(b.status)).length;
+        const cancelled = allBookings.filter(b => b.status === 'cancelled').length;
+
+        if (funnelChartInstance) funnelChartInstance.destroy();
+        funnelChartInstance = new Chart(funnelCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed','In Progress','Pending','Cancelled'],
+                datasets: [{
+                    data: [completed, inProgress, pending, cancelled],
+                    backgroundColor: ['#10b981','#7c3aed','#f59e0b','#ef4444'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {legend:{position:'bottom',labels:{padding:10,usePointStyle:true,font:{size: window.innerWidth < 768 ? 10 : 11}}}},
+                cutout: '60%'
+            }
+        });
+    }
+
+    // Service distribution
+    const serviceData = await DG.api('/admin-panel/service-analytics/');
+    const serviceCanvas = document.getElementById('serviceChart');
+    const serviceEmpty = document.getElementById('serviceEmpty');
+
+    if (serviceData && Array.isArray(serviceData) && serviceData.some(s => s.bookings > 0)) {
+        serviceCanvas.parentElement.hidden = false;
+        serviceEmpty.hidden = true;
+        if (serviceChartInstance) serviceChartInstance.destroy();
+        serviceChartInstance = new Chart(serviceCanvas, {
+            type: 'polarArea',
+            data: {
+                labels: serviceData.map(s => s.service),
+                datasets: [{
+                    data: serviceData.map(s => s.bookings),
+                    backgroundColor: [
+                        'rgba(79,70,229,0.7)','rgba(124,58,237,0.7)','rgba(6,182,212,0.7)',
+                        'rgba(245,158,11,0.7)','rgba(16,185,129,0.7)','rgba(239,68,68,0.7)'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {legend:{position:'bottom',labels:{padding:8,usePointStyle:true,font:{size: window.innerWidth < 768 ? 10 : 11}}}}
+            }
+        });
+    } else {
+        serviceCanvas.parentElement.hidden = true;
+        serviceEmpty.hidden = false;
+    }
+
+    // City analytics
+    const cityData = await DG.api('/admin-panel/city-analytics/');
+    const cityContainer = document.getElementById('cityStats');
+    if (cityData && Array.isArray(cityData) && cityData.length > 0) {
+        const maxBookings = Math.max(...cityData.map(c => c.bookings), 1);
+        cityContainer.innerHTML = cityData.map(c => `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="small fw-bold">${c.city}</span>
+                <div class="d-flex align-items-center gap-2 flex-fill mx-3">
+                    <div class="progress flex-fill" style="height:6px">
+                        <div class="progress-bar" style="width:${(c.bookings/maxBookings)*100}%;background:linear-gradient(135deg,#4f46e5,#7c3aed)"></div>
+                    </div>
+                </div>
+                <span class="small text-muted">${c.bookings} bookings</span>
+            </div>
+        `).join('');
+    }
+
+    // Pending verifications
+    const pendingMaids = await DG.api('/accounts/admin/maids/?status=pending');
+    const pending = DG.asList(pendingMaids);
+    const pendingContainer = document.getElementById('pendingList');
+    if (pending.length > 0) {
+        pendingContainer.innerHTML = pending.slice(0, 5).map(p => {
+            const user = p.user || {};
+            const name = `${user.first_name || user.username || 'Applicant'} ${user.last_name || ''}`.trim();
+            return `<div class="d-flex align-items-center gap-3 p-2 mb-2 rounded-3 hover-lift" style="cursor:pointer">
+                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f59e0b&color=fff&size=60" class="rounded-circle" width="36" height="36">
+                <div class="flex-fill"><div class="fw-bold small">${name}</div><div class="text-muted" style="font-size:.72rem">${p.experience_years} yrs exp • ₹${p.hourly_rate}/hr</div></div>
+                <span class="status-badge pending">Pending</span>
+            </div>`;
+        }).join('');
+    } else {
+        pendingContainer.innerHTML = '<div class="text-center py-3 text-muted small"><i class="bi bi-check-circle text-success me-1"></i>All maids verified!</div>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadDashboard);
+</script>
+{% endblock %}

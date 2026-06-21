@@ -1,0 +1,59 @@
+{% extends "maid/base_maid.html" %}
+{% block m_nav_req %}active{% endblock %}
+{% block page_title %}New Requests{% endblock %}
+{% block content %}
+<div class="row g-4" id="requestGrid"></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function emptyRequests() {
+    return '<div class="col-12"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-bell"></i></div><h5 class="empty-state-title">No new requests</h5><p class="empty-state-text">Pending customer bookings will appear here.</p></div></div>';
+}
+
+function requestCard(booking) {
+    return `
+        <div class="col-lg-6 animate-fade-in-up" id="request-${booking.id}">
+            <div class="booking-card" style="border-left:4px solid var(--accent)">
+                <div class="booking-card-header">
+                    <div><span class="status-badge pending">New Request</span><h5 class="mt-2 mb-1" style="font-size:1.05rem;font-weight:700">${booking.service_name || 'Home Service'}</h5></div>
+                    <div class="text-end"><div class="fw-bold fs-5" style="color:var(--primary)">${DG.formatCurrency(booking.final_amount || booking.total_amount || 0)}</div><div class="small text-muted">${booking.duration_hours || 2} hrs</div></div>
+                </div>
+                <div class="d-flex align-items-center gap-3 mt-3 p-3 rounded-3" style="background:var(--gray-50)">
+                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(booking.customer_name || 'Customer')}&background=e2e8f0&color=475569&size=80" class="rounded-3" width="44" height="44">
+                    <div class="flex-fill"><div class="fw-bold small">${booking.customer_name || 'Customer'}</div><div class="text-muted" style="font-size:.78rem"><i class="bi bi-geo-alt me-1"></i>${booking.address || 'Address pending'}</div></div>
+                </div>
+                <div class="d-flex gap-2 mt-3 small text-muted"><span><i class="bi bi-calendar me-1"></i>${booking.scheduled_date ? DG.formatDate(booking.scheduled_date) : 'ASAP'}</span><span class="ms-auto"><i class="bi bi-clock me-1"></i>${booking.booking_type}</span></div>
+                <div class="d-flex gap-2 mt-3">
+                    <button class="btn-premium flex-fill justify-content-center" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)" onclick="acceptRequest(${booking.id})"><i class="bi bi-check-circle"></i> Accept</button>
+                    <button class="btn btn-outline-danger flex-fill" onclick="dismissRequest(${booking.id})"><i class="bi bi-x-circle"></i> Decline</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+async function loadRequests() {
+    const data = await DG.api('/bookings/maid/requests/');
+    const bookings = data?.results || data || [];
+    document.getElementById('requestGrid').innerHTML = bookings.length ? bookings.map(requestCard).join('') : emptyRequests();
+}
+
+async function acceptRequest(bookingId) {
+    const response = await DG.api(`/bookings/${bookingId}/accept/`, { method: 'POST', body: JSON.stringify({}) });
+    if (response?.booking) {
+        DG.toast('Request accepted', 'The booking moved to Accepted Jobs.', 'success');
+        loadRequests();
+    } else {
+        DG.toast('Could not accept', response?.error || 'This request is no longer available.', 'error');
+    }
+}
+
+function dismissRequest(bookingId) {
+    document.getElementById(`request-${bookingId}`)?.remove();
+    if (!document.querySelector('#requestGrid .col-lg-6')) document.getElementById('requestGrid').innerHTML = emptyRequests();
+    DG.toast('Request dismissed', 'The booking remains available for other partners.', 'info');
+}
+
+document.addEventListener('DOMContentLoaded', loadRequests);
+</script>
+{% endblock %}

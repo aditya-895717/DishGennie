@@ -1,0 +1,37 @@
+{% extends "admin_panel/base_admin.html" %}
+{% block a_nav_disp %}active{% endblock %}
+{% block page_title %}Disputes{% endblock %}
+{% block content %}
+<div class="chart-card animate-fade-in-up">
+<div class="chart-card-header"><div class="chart-card-title" id="disputeTitle">Support Disputes</div></div>
+<table class="dg-table"><thead><tr><th>ID</th><th>Customer</th><th>Booking</th><th>Issue</th><th>Priority</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead>
+<tbody id="disputeRows"><tr><td colspan="8" class="text-center text-muted py-4">Loading disputes...</td></tr></tbody></table></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function statusBadge(status){return `<span class="status-badge ${status === 'resolved' ? 'completed' : status === 'open' ? 'pending' : 'in_progress'}">${status}</span>`;}
+function priorityBadge(priority){
+const color = priority === 'urgent' ? 'var(--danger-light);color:var(--danger)' : priority === 'high' ? 'var(--warning-light);color:#b45309' : 'var(--info-light);color:var(--info)';
+return `<span class="badge" style="background:${color}">${priority || 'medium'}</span>`;
+}
+function asList(data){return Array.isArray(data) ? data : (data?.results || []);}
+async function loadDisputes(){
+const tickets = asList(await DG.api('/support/tickets/'));
+document.getElementById('disputeTitle').textContent = `Support Disputes (${tickets.length})`;
+document.getElementById('disputeRows').innerHTML = tickets.length ? tickets.map(t=>`
+<tr><td class="fw-bold small">DSP${t.id}</td><td class="small">${t.user_name || `User ${t.user}`}</td><td class="small">${t.booking ? '#DG'+String(t.booking).padStart(5,'0') : '-'}</td>
+<td class="small">${t.subject || t.description || 'Support request'}</td><td>${priorityBadge(t.priority)}</td><td>${statusBadge(t.status)}</td>
+<td class="small text-muted">${DG.formatDate(t.updated_at || t.created_at)}</td><td><button class="btn btn-sm btn-outline-primary" onclick="openTicket(${t.id})"><i class="bi bi-eye"></i></button></td></tr>`).join('') : '<tr><td colspan="8" class="text-center text-muted py-4">No support disputes yet.</td></tr>';
+}
+async function openTicket(id){
+const ticket = await DG.api(`/support/tickets/${id}/`);
+if(!ticket || ticket.error){DG.toast('Ticket unavailable', ticket?.error || 'Please try again.', 'error'); return;}
+DG.confirm(ticket.subject || `Ticket #${id}`, ticket.description || 'No description provided.', async ()=>{
+await DG.api(`/support/tickets/${id}/`, {method:'PATCH', body:JSON.stringify({status:'resolved'})});
+DG.toast('Ticket updated','Marked as resolved.','success');
+loadDisputes();
+}, {confirmText:'Mark resolved', icon:'check-circle'});
+}
+document.addEventListener('DOMContentLoaded', loadDisputes);
+</script>
+{% endblock %}

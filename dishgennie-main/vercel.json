@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "dishgennie/wsgi.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "50mb",
+        "runtime": "python3.12"
+      }
+    },
+    {
+      "src": "staticfiles/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/staticfiles/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "dishgennie/wsgi.py"
+    }
+  ],
+  "buildCommand": "pip install -r requirements.txt && python manage.py collectstatic --noinput",
+  "outputDirectory": "."
+}

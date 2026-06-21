@@ -1,0 +1,31 @@
+{% extends "maid/base_maid.html" %}
+{% block m_nav_earn %}active{% endblock %}
+{% block page_title %}Earnings{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-1"><div class="kpi-card kpi-card-gradient" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)"><div class="kpi-card-icon"><i class="bi bi-cash-stack"></i></div><div class="kpi-card-label">Today</div><div class="kpi-card-value" id="todayEarn">₹0</div></div></div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-2"><div class="kpi-card"><div class="kpi-card-icon emerald"><i class="bi bi-calendar-week"></i></div><div class="kpi-card-value" id="weekEarn">₹0</div><div class="kpi-card-label">This Week</div></div></div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-3"><div class="kpi-card"><div class="kpi-card-icon blue"><i class="bi bi-calendar-month"></i></div><div class="kpi-card-value" id="monthEarn">₹0</div><div class="kpi-card-label">This Month</div></div></div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-4"><div class="kpi-card"><div class="kpi-card-icon amber"><i class="bi bi-trophy"></i></div><div class="kpi-card-value" id="totalJobs">0</div><div class="kpi-card-label">Total Jobs</div></div></div>
+</div>
+<div class="chart-card animate-fade-in-up"><div class="chart-card-header"><div class="chart-card-title">Payout History</div></div>
+<table class="dg-table"><thead><tr><th>Period</th><th>Gross</th><th>Commission</th><th>Net Payout</th><th>Status</th></tr></thead>
+<tbody id="payoutRows"><tr><td colspan="5" class="text-center text-muted py-4">Loading payouts...</td></tr></tbody></table></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function money(v){return DG.formatCurrency(Number(v || 0));}
+async function loadEarnings(){
+const data = await DG.api('/payments/maid/earnings/');
+if(!data || data.error){DG.toast('Earnings unavailable', data?.error || 'Please try again.', 'error'); return;}
+document.getElementById('todayEarn').textContent = money(data.today);
+document.getElementById('weekEarn').textContent = money(data.weekly);
+document.getElementById('monthEarn').textContent = money(data.monthly);
+document.getElementById('totalJobs').textContent = data.total_jobs || 0;
+const payouts = data.payouts || [];
+document.getElementById('payoutRows').innerHTML = payouts.length ? payouts.map(p=>`
+<tr><td class="small">${DG.formatDate(p.period_start)} - ${DG.formatDate(p.period_end)}</td><td>${money(p.amount)}</td><td class="text-danger">-${money(p.commission)}</td><td class="fw-bold">${money(p.net_amount)}</td><td><span class="status-badge ${p.status === 'processed' ? 'completed' : 'pending'}">${p.status}</span></td></tr>`).join('') : '<tr><td colspan="5" class="text-center text-muted py-4">No payouts generated yet.</td></tr>';
+}
+document.addEventListener('DOMContentLoaded', loadEarnings);
+</script>
+{% endblock %}

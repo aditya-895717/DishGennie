@@ -1,0 +1,76 @@
+{% extends "maid/base_maid.html" %}
+{% block m_nav_nav %}active{% endblock %}
+{% block page_title %}Navigation{% endblock %}
+{% block content %}
+<div class="row g-4">
+<div class="col-lg-8"><div class="chart-card" style="padding:0;overflow:hidden"><div id="navMap" style="height:480px;border-radius:var(--radius-lg)"></div></div></div>
+<div class="col-lg-4">
+<div class="glass-card mb-3"><h6 class="fw-bold mb-3"><i class="bi bi-geo-alt-fill me-2" style="color:#7c3aed"></i>Active Navigation</h6>
+<div class="p-3 rounded-3 mb-3" style="background:var(--primary-50)"><div class="d-flex justify-content-between mb-1"><span class="small fw-bold">Distance</span><span class="small fw-bold" style="color:#7c3aed">2.3 km</span></div><div class="progress" style="height:5px"><div class="progress-bar" style="width:65%;background:linear-gradient(135deg,#7c3aed,#6d28d9)"></div></div></div>
+<div class="d-flex justify-content-between mb-2"><span class="small text-muted">ETA</span><span class="fw-bold">~12 min</span></div>
+<div class="d-flex justify-content-between mb-2"><span class="small text-muted">Customer</span><span class="fw-bold" id="navCustomer">Loading...</span></div>
+<div class="d-flex justify-content-between mb-3"><span class="small text-muted">Service</span><span class="fw-bold" id="navService">Loading...</span></div>
+<div class="p-3 rounded-3 text-center mb-3" style="background:var(--gray-50)"><div class="small text-muted">Enter OTP from customer</div><input type="text" class="dg-input text-center fw-bold mt-2" maxlength="6" id="serviceOtp" placeholder="000000" style="max-width:180px;margin:0 auto;letter-spacing:8px;font-size:1.2rem"></div>
+<button class="btn-premium w-100 justify-content-center mb-2" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)" id="enRouteBtn"><i class="bi bi-signpost me-1"></i> Mark En Route</button>
+<button class="btn-premium w-100 justify-content-center" style="background:linear-gradient(135deg,#10b981,#059669)" id="startBtn"><i class="bi bi-play-circle me-1"></i> Start Service</button>
+</div>
+<div class="d-flex gap-2">
+<button class="btn-premium-outline flex-fill justify-content-center" style="border-color:#7c3aed;color:#7c3aed" onclick="DG.toast('Call requested','Customer contact workflow is ready for integration.','info')"><i class="bi bi-telephone"></i> Call</button>
+<button class="btn-premium-outline flex-fill justify-content-center" style="border-color:#7c3aed;color:#7c3aed" onclick="DG.toast('Chat opened','Use support tickets for booking-linked messages.','info')"><i class="bi bi-chat"></i> Chat</button>
+</div>
+</div></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const params = new URLSearchParams(window.location.search);
+let activeBookingId = params.get('booking_id');
+let activeBooking = null;
+
+function drawMap(booking) {
+    if (!window.L) return;
+    const customerLat = Number(booking?.latitude || 19.076);
+    const customerLng = Number(booking?.longitude || 72.8777);
+    const maidLat = customerLat + 0.006;
+    const maidLng = customerLng - 0.006;
+    const map = L.map('navMap').setView([customerLat, customerLng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+    const maidIcon = L.divIcon({className:'',html:'<div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 4px 12px rgba(0,0,0,.3);border:3px solid #fff"><i class="bi bi-person-fill"></i></div>',iconSize:[36,36],iconAnchor:[18,18]});
+    const custIcon = L.divIcon({className:'',html:'<div style="background:#ef4444;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 4px 12px rgba(0,0,0,.3);border:3px solid #fff"><i class="bi bi-house-fill"></i></div>',iconSize:[32,32],iconAnchor:[16,16]});
+    L.marker([maidLat, maidLng],{icon:maidIcon}).addTo(map).bindPopup('You are here');
+    L.marker([customerLat, customerLng],{icon:custIcon}).addTo(map).bindPopup('Customer location');
+    L.polyline([[maidLat, maidLng],[customerLat + 0.003, customerLng - 0.002],[customerLat, customerLng]],{color:'#7c3aed',weight:4,dashArray:'8,8'}).addTo(map);
+}
+
+async function loadNavigation() {
+    if (!activeBookingId) {
+        const data = await DG.api('/bookings/maid/active/');
+        const jobs = data?.results || data || [];
+        activeBookingId = jobs[0]?.id;
+    }
+    if (!activeBookingId) {
+        document.getElementById('navCustomer').textContent = 'No active job';
+        document.getElementById('navService').textContent = 'Accept a request first';
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('enRouteBtn').disabled = true;
+        return;
+    }
+    activeBooking = await DG.api(`/bookings/${activeBookingId}/`);
+    document.getElementById('navCustomer').textContent = activeBooking.customer_name || 'Customer';
+    document.getElementById('navService').textContent = activeBooking.service_name || 'Home Service';
+    drawMap(activeBooking);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadNavigation();
+    document.getElementById('enRouteBtn').addEventListener('click', async function() {
+        const response = await DG.api(`/bookings/${activeBookingId}/en-route/`, { method: 'POST', body: JSON.stringify({}) });
+        DG.toast(response?.booking ? 'Status updated' : 'Could not update', response?.message || response?.error || 'Try again.', response?.booking ? 'success' : 'error');
+    });
+    document.getElementById('startBtn').addEventListener('click', async function() {
+        const otp = document.getElementById('serviceOtp').value.trim();
+        const response = await DG.api(`/bookings/${activeBookingId}/start/`, { method: 'POST', body: JSON.stringify({ otp }) });
+        DG.toast(response?.message ? 'Service started' : 'Could not start', response?.message || response?.error || 'Check the OTP and try again.', response?.message ? 'success' : 'error');
+    });
+});
+</script>
+{% endblock %}

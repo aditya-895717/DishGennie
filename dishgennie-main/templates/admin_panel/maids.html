@@ -1,0 +1,52 @@
+{% extends "admin_panel/base_admin.html" %}
+{% block a_nav_maids %}active{% endblock %}
+{% block page_title %}Maid Management{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-1"><div class="kpi-card"><div class="kpi-card-icon violet"><i class="bi bi-person-badge"></i></div><div class="kpi-card-value" id="totalMaids">0</div><div class="kpi-card-label">Total Maids</div></div></div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-2"><div class="kpi-card"><div class="kpi-card-icon emerald"><i class="bi bi-check-circle"></i></div><div class="kpi-card-value" id="verifiedMaids">0</div><div class="kpi-card-label">Verified</div></div></div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-3"><div class="kpi-card"><div class="kpi-card-icon amber"><i class="bi bi-clock"></i></div><div class="kpi-card-value" id="pendingMaids">0</div><div class="kpi-card-label">Pending</div></div></div>
+<div class="col-6 col-lg-3 animate-fade-in-up stagger-4"><div class="kpi-card"><div class="kpi-card-icon rose"><i class="bi bi-toggle-on"></i></div><div class="kpi-card-value" id="onlineMaids">0</div><div class="kpi-card-label">Available</div></div></div>
+</div>
+<div class="chart-card animate-fade-in-up stagger-5">
+<div class="chart-card-header"><div class="chart-card-title">All Maids</div><div class="d-flex gap-2"><select class="dg-input" id="statusFilter" style="width:160px;padding:8px 12px;font-size:.82rem"><option value="">All Status</option><option value="approved">Verified</option><option value="pending">Pending</option><option value="rejected">Rejected</option></select><input type="text" class="dg-input" id="maidSearch" placeholder="Search..." style="width:200px;padding:8px 12px;font-size:.82rem"></div></div>
+<table class="dg-table"><thead><tr><th>Maid</th><th>City</th><th>Skills</th><th>Rating</th><th>Jobs</th><th>Earnings</th><th>Status</th></tr></thead>
+<tbody id="maidsBody"></tbody></table>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let adminMaids = [];
+function statusClass(status) {
+    return ['approved', 'verified'].includes(status) ? 'completed' : status === 'rejected' ? 'cancelled' : 'pending';
+}
+function renderMaids() {
+    const status = document.getElementById('statusFilter').value;
+    const search = document.getElementById('maidSearch').value.toLowerCase();
+    const maids = adminMaids.filter(profile => (!status || profile.verification_status === status) && (profile.user?.username || profile.user?.first_name || '').toLowerCase().includes(search));
+    document.getElementById('totalMaids').textContent = adminMaids.length;
+    document.getElementById('verifiedMaids').textContent = adminMaids.filter(p => ['approved', 'verified'].includes(p.verification_status)).length;
+    document.getElementById('pendingMaids').textContent = adminMaids.filter(p => p.verification_status === 'pending').length;
+    document.getElementById('onlineMaids').textContent = adminMaids.filter(p => p.is_available).length;
+    document.getElementById('maidsBody').innerHTML = maids.length ? maids.map(profile => {
+        const name = `${profile.user?.first_name || profile.user?.username || 'Maid'} ${profile.user?.last_name || ''}`.trim();
+        return `<tr>
+            <td><div class="d-flex align-items-center gap-2"><img src="https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=7c3aed&color=fff&size=60" class="rounded-circle" width="32" height="32"><div class="fw-bold small">${name}</div></div></td>
+            <td class="small">${profile.user?.city || '-'}</td>
+            <td>${(profile.skills || ['Home Help']).slice(0, 2).map(skill => `<span class="maid-card-skill-badge" style="font-size:.65rem">${skill}</span>`).join(' ')}</td>
+            <td><i class="bi bi-star-fill text-warning" style="font-size:.75rem"></i> <span class="small fw-bold">${profile.avg_rating}</span></td>
+            <td class="small">${profile.total_jobs}</td>
+            <td class="small fw-bold">${DG.formatCurrency(profile.total_earnings || 0)}</td>
+            <td><span class="status-badge ${statusClass(profile.verification_status)}">${profile.verification_status.replace('_', ' ')}</span></td>
+        </tr>`;
+    }).join('') : '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-person-badge"></i></div><div class="empty-state-title">No maids found</div></div></td></tr>';
+}
+document.addEventListener('DOMContentLoaded', async function() {
+    const data = await DG.api('/accounts/admin/maids/');
+    adminMaids = data?.results || data || [];
+    renderMaids();
+    document.getElementById('statusFilter').addEventListener('change', renderMaids);
+    document.getElementById('maidSearch').addEventListener('input', DG.debounce(renderMaids, 200));
+});
+</script>
+{% endblock %}
