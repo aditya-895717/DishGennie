@@ -228,22 +228,15 @@ LOGOUT_REDIRECT_URL = "/accounts/login/"
 # Django Messages: use session storage for reliability
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
 
-# Email Configuration — Brevo SMTP
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp-relay.brevo.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get("BREVO_SMTP_USER", "")
-EMAIL_HOST_PASSWORD = os.environ.get("BREVO_SMTP_KEY", "")
+# Email — Django backend not used for transactional mail (handled by Brevo SDK)
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL",
     "DishGennie <noreply@dishgennie.com>",
 )
-SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
-# Local dev only: fall back to console when Brevo credentials are absent
-if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Brevo SDK
+BREVO_API_KEY = os.environ.get("BREVO_API_KEY")
 
 # ─── Session configuration ────────────────────────────────────────────
 # On Vercel (serverless, read-only filesystem) we MUST use cookie-based

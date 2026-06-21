@@ -14,7 +14,11 @@ from .models import Booking
 from .serializers import BookingSerializer, BookingCreateSerializer
 from apps.accounts.permissions import IsCustomer, IsMaid, IsAdmin
 from apps.notifications.models import Notification
-from apps.accounts.email_utils import send_otp_email, send_booking_confirmation
+from apps.accounts.email_utils import (
+    send_otp_email,
+    send_booking_confirmation,
+    send_maid_notification,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -143,20 +147,19 @@ class BookingListCreateView(generics.ListCreateAPIView):
             send_otp_email(
                 booking.customer.email,
                 booking.otp,
-                booking.customer.get_full_name() or booking.customer.username,
+                booking.customer.first_name or booking.customer.username,
             )
             send_booking_confirmation(
                 booking.customer.email,
-                {
-                    'id': booking.pk,
-                    'service': booking.service.name,
-                    'date': str(booking.scheduled_date or 'Instant'),
-                    'maid_name': (
-                        (booking.maid.get_full_name() or booking.maid.username)
-                        if booking.maid else 'TBD'
-                    ),
-                },
+                booking,
+                booking.customer.first_name or booking.customer.username,
             )
+            if booking.maid:
+                send_maid_notification(
+                    booking.maid.email,
+                    booking,
+                    booking.maid.first_name or booking.maid.username,
+                )
         except Exception as exc:
             logger.warning("Post-booking emails failed for booking #%s: %s", booking.pk, exc)
 
