@@ -158,4 +158,4 @@ This project is licensed under the MIT License.
 
 ## 👨‍💻 Author
 
-**Alok Vikram** — Built with ❤️
+**Aditya Dubey** — Built with ❤️
