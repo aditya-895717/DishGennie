@@ -11,11 +11,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.views.decorators.cache import never_cache
 from django.conf import settings
-from django.urls import reverse
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
-from apps.accounts.email_utils import send_otp_email, send_password_reset_email
+from apps.accounts.email_utils import send_otp_email
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import CustomUser, MaidProfile
@@ -404,41 +400,131 @@ def dashboard_redirect(request):
     return _redirect_by_role(request.user)
 
 
-# ──────────────────── FORGOT / RESET PASSWORD ────────────────────
+# ──────────────────── FORGOT / RESET PASSWORD (OTP flow) ────────────────────
 
 @never_cache
 def forgot_password(request):
-    """
-    Forgot-password page — GET shows form, POST sends reset link via Brevo SDK.
-    Never reveals whether an email address is registered (security best practice).
-    """
     if request.user.is_authenticated:
         return _redirect_by_role(request.user)
 
     if request.method == 'POST':
         email = request.POST.get('email', '').strip()
-        if email:
-            try:
-                user = CustomUser.objects.get(email=email, is_active=True)
-                token = default_token_generator.make_token(user)
-                uid = urlsafe_base64_encode(force_bytes(user.pk))
-                reset_url = request.build_absolute_uri(
-                    reverse('password-reset-confirm', kwargs={'uidb64': uid, 'token': token})
+        if not email:
+            messages.error(request, 'Please enter your email.')
+            return render(request, 'accounts/forgot_password.html')
+
+        try:
+            user = CustomUser.objects.get(email=email, is_active=True)
+            otp = str(random.randint(100000, 999999))
+            request.session['password_reset'] = {
+                'email': email,
+                'otp': otp,
+                'user_id': str(user.pk),
+            }
+            email_sent = send_otp_email(
+                to_email=email,
+                otp_code=otp,
+                user_name=user.first_name or user.username,
+            )
+            if email_sent:
+                logger.info("Password reset OTP sent to %s", email)
+                messages.success(
+                    request,
+                    f'A verification code has been sent to {email}'
                 )
-                email_sent = send_password_reset_email(
-                    to_email=user.email,
-                    reset_url=reset_url,
-                    user_name=user.first_name or user.username,
-                )
-                if email_sent:
-                    logger.info("Password reset email sent to %s", user.email)
-                else:
-                    logger.error("Password reset email failed for %s", user.email)
-            except CustomUser.DoesNotExist:
-                pass  # Don't reveal whether the email is registered
-        return redirect('password-reset-done')
+                return redirect('password-reset-verify-otp')
+            else:
+                logger.error("Password reset OTP failed for %s", email)
+                messages.error(request, 'Could not send OTP. Please try again.')
+
+        except CustomUser.DoesNotExist:
+            # Never reveal whether the email is registered
+            messages.success(
+                request,
+                f'If {email} is registered, a verification code has been sent.'
+            )
+            return redirect('password-reset-verify-otp')
 
     return render(request, 'accounts/forgot_password.html')
+
+
+@never_cache
+def password_reset_verify_otp(request):
+    reset_data = request.session.get('password_reset')
+    if not reset_data:
+        messages.error(request, 'Session expired. Please start again.')
+        return redirect('forgot-password')
+
+    if request.method == 'POST':
+        entered_otp = request.POST.get('otp', '').strip()
+        action = request.POST.get('action', 'verify')
+
+        if action == 'resend':
+            try:
+                user = CustomUser.objects.get(pk=reset_data['user_id'])
+                new_otp = str(random.randint(100000, 999999))
+                reset_data['otp'] = new_otp
+                request.session['password_reset'] = reset_data
+                send_otp_email(
+                    to_email=reset_data['email'],
+                    otp_code=new_otp,
+                    user_name=user.first_name or user.username,
+                )
+                messages.success(request, f'New code sent to {reset_data["email"]}')
+            except Exception as e:
+                logger.error("Resend OTP error: %s", e)
+                messages.error(request, 'Could not resend OTP.')
+            return render(request, 'accounts/password_reset_verify_otp.html',
+                          {'email': reset_data['email']})
+
+        if entered_otp != reset_data.get('otp'):
+            messages.error(request, 'Invalid code. Please try again.')
+            return render(request, 'accounts/password_reset_verify_otp.html',
+                          {'email': reset_data['email']})
+
+        reset_data['otp_verified'] = True
+        request.session['password_reset'] = reset_data
+        return redirect('password-reset-new')
+
+    return render(request, 'accounts/password_reset_verify_otp.html',
+                  {'email': reset_data.get('email', '')})
+
+
+@never_cache
+def password_reset_new(request):
+    reset_data = request.session.get('password_reset')
+    if not reset_data or not reset_data.get('otp_verified'):
+        messages.error(request, 'Please verify your OTP first.')
+        return redirect('forgot-password')
+
+    if request.method == 'POST':
+        password = request.POST.get('password', '')
+        password_confirm = request.POST.get('password_confirm', '')
+
+        if len(password) < 8:
+            messages.error(request, 'Password must be at least 8 characters.')
+            return render(request, 'accounts/password_reset_new.html')
+
+        if password != password_confirm:
+            messages.error(request, 'Passwords do not match.')
+            return render(request, 'accounts/password_reset_new.html')
+
+        try:
+            user = CustomUser.objects.get(pk=reset_data['user_id'])
+            user.set_password(password)
+            user.save()
+            del request.session['password_reset']
+            logger.info("Password reset successful for %s", user.email)
+            messages.success(request, 'Password reset successful! Please login.')
+            return redirect('login')
+        except CustomUser.DoesNotExist:
+            messages.error(request, 'User not found.')
+            return redirect('forgot-password')
+        except Exception as e:
+            logger.error("Password reset failed: %s", e)
+            messages.error(request, 'Something went wrong. Please try again.')
+
+    return render(request, 'accounts/password_reset_new.html')
 
 
 # ──────────────────── USER PANEL ────────────────────

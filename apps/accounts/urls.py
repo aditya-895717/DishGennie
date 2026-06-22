@@ -1,8 +1,7 @@
 """
 Template URL routes for accounts app — serves HTML pages.
 """
-from django.urls import path, reverse_lazy
-from django.contrib.auth import views as auth_views
+from django.urls import path
 from . import template_views
 
 urlpatterns = [
@@ -14,18 +13,10 @@ urlpatterns = [
     path('accounts/dashboard/', template_views.dashboard_redirect, name='dashboard-redirect'),
     path('accounts/verify-otp/', template_views.verify_otp_page, name='verify-otp'),
 
-    # ─── Password Reset (Django built-in views with custom templates) ───
+    # ─── Password Reset (OTP flow) ───
     path('accounts/forgot-password/', template_views.forgot_password, name='forgot-password'),
-    path('accounts/forgot-password/done/', auth_views.PasswordResetDoneView.as_view(
-        template_name='accounts/password_reset_done.html',
-    ), name='password-reset-done'),
-    path('accounts/reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
-        template_name='accounts/password_reset_confirm.html',
-        success_url=reverse_lazy('password-reset-complete'),
-    ), name='password-reset-confirm'),
-    path('accounts/reset/complete/', auth_views.PasswordResetCompleteView.as_view(
-        template_name='accounts/password_reset_complete.html',
-    ), name='password-reset-complete'),
+    path('accounts/forgot-password/verify-otp/', template_views.password_reset_verify_otp, name='password-reset-verify-otp'),
+    path('accounts/forgot-password/new-password/', template_views.password_reset_new, name='password-reset-new'),
 
     # ─── User Panel ───
     path('', template_views.home_page, name='home'),

@@ -115,60 +115,6 @@ def send_booking_confirmation(to_email, booking, user_name="User"):
         return False
 
 
-def send_password_reset_email(to_email, reset_url, user_name="User"):
-    if not settings.BREVO_API_KEY:
-        logger.error("BREVO_API_KEY not set")
-        return False
-    try:
-        api = _get_api()
-        msg = sib_api_v3_sdk.SendSmtpEmail(
-            to=[{"email": to_email, "name": user_name}],
-            sender=_parse_sender(),
-            subject="DishGennie — Reset Your Password",
-            html_content=(
-                f'<div style="font-family:Arial,sans-serif;'
-                f'max-width:480px;margin:auto;padding:32px;'
-                f'border:1px solid #e5e7eb;border-radius:12px">'
-                f'<h2 style="color:#0d6356;margin-bottom:4px">DishGennie</h2>'
-                f'<p>Hi <strong>{user_name}</strong>,</p>'
-                f'<p>We received a request to reset your password.</p>'
-                f'<div style="text-align:center;margin:24px 0">'
-                f'<a href="{reset_url}" style="background:#0d6356;color:white;'
-                f'padding:14px 28px;border-radius:8px;text-decoration:none;'
-                f'font-weight:bold;font-size:16px">Reset My Password</a></div>'
-                f'<p style="color:#6b7280;font-size:14px">'
-                f'This link expires in <strong>24 hours</strong>.</p>'
-                f'<p style="color:#6b7280;font-size:14px">'
-                f'If you did not request this, ignore this email. '
-                f'Your password will not change.</p>'
-                f'<hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">'
-                f'<p style="color:#9ca3af;font-size:12px">'
-                f'Or copy this link:<br>'
-                f'<a href="{reset_url}" style="color:#0d6356;word-break:break-all">'
-                f'{reset_url}</a></p>'
-                f'<p style="color:#9ca3af;font-size:12px;text-align:center">'
-                f'— DishGennie Team</p>'
-                f'</div>'
-            ),
-            text_content=(
-                f"Hi {user_name},\n\n"
-                f"Reset your password using this link:\n{reset_url}\n\n"
-                f"Link expires in 24 hours.\n\n"
-                f"If you did not request this, ignore this email.\n\n"
-                f"— DishGennie Team"
-            ),
-        )
-        api.send_transac_email(msg)
-        logger.info("Password reset email sent to %s", to_email)
-        return True
-    except ApiException as e:
-        logger.error("Brevo password reset ApiException: %s", e)
-        return False
-    except Exception as e:
-        logger.error("Password reset email unexpected error: %s", e)
-        return False
-
-
 def send_maid_notification(to_email, booking, maid_name=""):
     try:
         date_display = booking.scheduled_date or "Instant"
