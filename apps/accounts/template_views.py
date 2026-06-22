@@ -421,6 +421,9 @@ def forgot_password(request):
                 'otp': otp,
                 'user_id': str(user.pk),
             }
+            request.session.modified = True
+            request.session.save()
+            logger.info("Password reset session saved for %s", email)
             email_sent = send_otp_email(
                 to_email=email,
                 otp_code=otp,
@@ -438,12 +441,11 @@ def forgot_password(request):
                 messages.error(request, 'Could not send OTP. Please try again.')
 
         except CustomUser.DoesNotExist:
-            # Never reveal whether the email is registered
+            # Never reveal whether the email is registered — stay on same page
             messages.success(
                 request,
                 f'If {email} is registered, a verification code has been sent.'
             )
-            return redirect('password-reset-verify-otp')
 
     return render(request, 'accounts/forgot_password.html')
 
@@ -451,6 +453,8 @@ def forgot_password(request):
 @never_cache
 def password_reset_verify_otp(request):
     reset_data = request.session.get('password_reset')
+    logger.info("Session keys: %s", list(request.session.keys()))
+    logger.info("Password reset session data exists: %s", bool(reset_data))
     if not reset_data:
         messages.error(request, 'Session expired. Please start again.')
         return redirect('forgot-password')
@@ -484,6 +488,8 @@ def password_reset_verify_otp(request):
 
         reset_data['otp_verified'] = True
         request.session['password_reset'] = reset_data
+        request.session.modified = True
+        request.session.save()
         return redirect('password-reset-new')
 
     return render(request, 'accounts/password_reset_verify_otp.html',

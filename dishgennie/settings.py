@@ -245,6 +245,9 @@ BREVO_API_KEY = os.environ.get("BREVO_API_KEY")
 # sessions will crash with a 500 on every POST that touches the session.
 if IS_VERCEL:
     SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
+else:
+    # Render / local — database-backed sessions persist across requests
+    SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 30
 SESSION_SAVE_EVERY_REQUEST = True
