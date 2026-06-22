@@ -17,7 +17,7 @@ def ping(request):
         "status": "ok",
         "service": "DishGennie",
         "timestamp": str(datetime.datetime.now()),
-        "email_configured": bool(os.environ.get("BREVO_SMTP_KEY")),
+        "email_configured": bool(os.environ.get("BREVO_API_KEY")),
     })
 
 
