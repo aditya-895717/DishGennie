@@ -228,7 +228,9 @@ LOGOUT_REDIRECT_URL = "/accounts/login/"
 # Django Messages: use session storage for reliability
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
 
-# Email — transactional mail handled by Brevo SDK directly (no Django EMAIL_BACKEND needed)
+# Email — all transactional mail goes via Brevo SDK.
+# dummy backend silences any stray send_mail() calls (avoids SMTP ConnectionRefusedError).
+EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL",
     "DishGennie <noreply@dishgennie.com>",

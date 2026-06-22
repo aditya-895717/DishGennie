@@ -11,7 +11,11 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.views.decorators.cache import never_cache
 from django.conf import settings
-from apps.accounts.email_utils import send_otp_email
+from django.urls import reverse
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+from apps.accounts.email_utils import send_otp_email, send_password_reset_email
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import CustomUser, MaidProfile
@@ -401,8 +405,40 @@ def dashboard_redirect(request):
 
 
 # ──────────────────── FORGOT / RESET PASSWORD ────────────────────
-# These use Django's built-in auth views (configured in urls.py).
-# Custom templates are in templates/accounts/
+
+@never_cache
+def forgot_password(request):
+    """
+    Forgot-password page — GET shows form, POST sends reset link via Brevo SDK.
+    Never reveals whether an email address is registered (security best practice).
+    """
+    if request.user.is_authenticated:
+        return _redirect_by_role(request.user)
+
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        if email:
+            try:
+                user = CustomUser.objects.get(email=email, is_active=True)
+                token = default_token_generator.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                reset_url = request.build_absolute_uri(
+                    reverse('password-reset-confirm', kwargs={'uidb64': uid, 'token': token})
+                )
+                email_sent = send_password_reset_email(
+                    to_email=user.email,
+                    reset_url=reset_url,
+                    user_name=user.first_name or user.username,
+                )
+                if email_sent:
+                    logger.info("Password reset email sent to %s", user.email)
+                else:
+                    logger.error("Password reset email failed for %s", user.email)
+            except CustomUser.DoesNotExist:
+                pass  # Don't reveal whether the email is registered
+        return redirect('password-reset-done')
+
+    return render(request, 'accounts/forgot_password.html')
 
 
 # ──────────────────── USER PANEL ────────────────────

@@ -15,12 +15,7 @@ urlpatterns = [
     path('accounts/verify-otp/', template_views.verify_otp_page, name='verify-otp'),
 
     # ─── Password Reset (Django built-in views with custom templates) ───
-    path('accounts/forgot-password/', auth_views.PasswordResetView.as_view(
-        template_name='accounts/forgot_password.html',
-        email_template_name='accounts/password_reset_email.html',
-        subject_template_name='accounts/password_reset_subject.txt',
-        success_url=reverse_lazy('password-reset-done'),
-    ), name='forgot-password'),
+    path('accounts/forgot-password/', template_views.forgot_password, name='forgot-password'),
     path('accounts/forgot-password/done/', auth_views.PasswordResetDoneView.as_view(
         template_name='accounts/password_reset_done.html',
     ), name='password-reset-done'),
