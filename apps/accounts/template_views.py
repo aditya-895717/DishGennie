@@ -10,8 +10,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.views.decorators.cache import never_cache
-from django.core.mail import send_mail
 from django.conf import settings
+from apps.accounts.email_utils import send_otp_email
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import CustomUser, MaidProfile
@@ -256,42 +256,17 @@ def maid_register_page(request):
 # ──────────────────── OTP VERIFICATION ────────────────────
 
 def _send_otp_email(email, otp, name):
-    """Send OTP verification email. Returns True on success, False on failure."""
-    subject = f'DishGennie — Your Verification Code is {otp}'
-    message = (
-        f'Hi {name},\n\n'
-        f'Your email verification code is: {otp}\n\n'
-        f'This code is valid for 10 minutes. Do not share it with anyone.\n\n'
-        f'— DishGennie Team'
+    """Send OTP verification email via Brevo SDK. Returns True on success, False on failure."""
+    email_sent = send_otp_email(
+        to_email=email,
+        otp_code=otp,
+        user_name=name,
     )
-    html_message = (
-        f'<div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;'
-        f'border:1px solid #e5e7eb;border-radius:12px">'
-        f'<h2 style="color:#0d6356;margin-bottom:4px">DishGennie</h2>'
-        f'<p>Hi <strong>{name}</strong>,</p>'
-        f'<p>Your email verification code is:</p>'
-        f'<div style="text-align:center;margin:24px 0">'
-        f'<span style="font-size:32px;font-weight:700;letter-spacing:8px;'
-        f'background:#f0fdf4;padding:16px 32px;border-radius:8px;color:#0d6356">{otp}</span></div>'
-        f'<p style="color:#6b7280;font-size:14px">This code is valid for 10 minutes. '
-        f'Do not share it with anyone.</p>'
-        f'<hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">'
-        f'<p style="color:#9ca3af;font-size:12px;text-align:center">'
-        f'If you did not request this code, please ignore this email.</p></div>'
-    )
-    try:
-        sent = send_mail(
-            subject, message, settings.DEFAULT_FROM_EMAIL, [email],
-            html_message=html_message, fail_silently=False,
-        )
-        if sent:
-            logger.info('OTP email sent successfully to %s', email)
-        else:
-            logger.warning('send_mail returned 0 for %s', email)
-        return bool(sent)
-    except Exception as exc:
-        logger.error('Failed to send OTP email to %s: %s', email, exc, exc_info=True)
-        return False
+    if email_sent:
+        logger.info("OTP email sent via Brevo to %s", email)
+    else:
+        logger.error("OTP email FAILED for %s — check BREVO_API_KEY", email)
+    return email_sent
 
 
 @never_cache

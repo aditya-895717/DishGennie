@@ -28,6 +28,9 @@ def _parse_sender():
 
 
 def send_otp_email(to_email, otp_code, user_name="User"):
+    if not settings.BREVO_API_KEY:
+        logger.error("BREVO_API_KEY not set — email cannot be sent")
+        return False
     try:
         api = _get_api()
         msg = sib_api_v3_sdk.SendSmtpEmail(
