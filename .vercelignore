@@ -1,0 +1,39 @@
+# Files excluded from Vercel deployments.
+#
+# Without this file the CLI uploads the whole working directory, which on a
+# developer machine includes .env, the local SQLite database and the venv.
+# Keeping this list aligned with .gitignore means a CLI deploy and a
+# Git-triggered deploy send the same tree, so the two cannot drift.
+
+# Secrets — never ship these into a function bundle
+.env
+.env.*
+data_dump.json
+
+# Local database
+db.sqlite3
+db.sqlite3-journal
+
+# Local virtualenvs (dependencies are installed from requirements.txt)
+venv/
+env/
+.venv/
+
+# Build output. Deliberately excluded: staticfiles/ is gitignored, so a
+# Git deploy never has it. Shipping it only from CLI deploys would make
+# asset URLs hashed one way and unhashed the other. WhiteNoise serves the
+# committed static/ directory directly via WHITENOISE_USE_FINDERS.
+staticfiles/
+static_collected/
+
+# Caches and local noise
+__pycache__/
+*.py[cod]
+.git/
+.github/
+media/
+htmlcov/
+.coverage
+*.log
+.vscode/
+.idea/
