@@ -58,3 +58,6 @@ setup_fresh.py
 
 # Local data dump from the SQLite → Neon migration (contains password hashes)
 data_dump.json
+
+.vercel
+.env*
