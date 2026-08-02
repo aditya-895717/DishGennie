@@ -2,7 +2,7 @@
 {% block page_title %}Live Tracking{% endblock %}
 {% block content %}
 <div class="row g-4">
-<div class="col-lg-8"><div class="chart-card" style="padding:0;overflow:hidden"><div id="trackingMap" style="height:500px;border-radius:var(--radius-lg)"></div></div></div>
+<div class="col-lg-8"><div class="chart-card" style="padding:0;overflow:hidden"><div id="trackingMap" style="height:500px;border-radius:var(--radius-lg)"></div><div class="p-2 text-center small text-muted" id="trackingLocationInfo">Waiting for maid's location...</div></div></div>
 <div class="col-lg-4">
 <div class="glass-card mb-3">
 <div class="d-flex align-items-center gap-3 mb-3">
@@ -27,6 +27,9 @@
 <script>
 const trackingBookingId = {{ booking_id }};
 let trackingBooking = null;
+let trackingMap = null;
+let maidMarker = null;
+let lastLocationAt = null;
 
 function statusText(status) {
     const labels = {
@@ -79,22 +82,45 @@ function loadMap() {
     }
     const customerLat = Number(trackingBooking?.latitude || 19.076);
     const customerLng = Number(trackingBooking?.longitude || 72.8777);
-    const maidLat = customerLat + 0.006;
-    const maidLng = customerLng - 0.006;
-    const map = L.map('trackingMap').setView([customerLat, customerLng], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
-    const maidIcon = L.divIcon({className:'',html:'<div style="background:var(--gradient-primary);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 4px 12px rgba(0,0,0,0.3);border:3px solid #fff"><i class="bi bi-person-fill"></i></div>',iconSize:[36,36],iconAnchor:[18,18]});
+    trackingMap = L.map('trackingMap').setView([customerLat, customerLng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(trackingMap);
     const custIcon = L.divIcon({className:'',html:'<div style="background:#ef4444;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 4px 12px rgba(0,0,0,0.3);border:3px solid #fff"><i class="bi bi-house-fill"></i></div>',iconSize:[32,32],iconAnchor:[16,16]});
-    L.marker([maidLat, maidLng],{icon:maidIcon}).addTo(map).bindPopup(`${trackingBooking?.maid_name || 'Maid'} is on the way`);
-    L.marker([customerLat, customerLng],{icon:custIcon}).addTo(map).bindPopup('Your location');
+    L.marker([customerLat, customerLng],{icon:custIcon}).addTo(trackingMap).bindPopup('Your location');
 }
 
-document.addEventListener('DOMContentLoaded', async function() {
+function placeMaidMarker(lat, lng) {
+    if (!trackingMap || !window.L) return;
+    if (maidMarker) {
+        maidMarker.setLatLng([lat, lng]);
+        return;
+    }
+    const maidIcon = L.divIcon({className:'',html:'<div style="background:var(--gradient-primary);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 4px 12px rgba(0,0,0,0.3);border:3px solid #fff"><i class="bi bi-person-fill"></i></div>',iconSize:[36,36],iconAnchor:[18,18]});
+    maidMarker = L.marker([lat, lng],{icon:maidIcon}).addTo(trackingMap).bindPopup(`${trackingBooking?.maid_name || 'Maid'} is on the way`);
+}
+
+function updateLocationAgoText() {
+    const el = document.getElementById('trackingLocationInfo');
+    if (!el || !lastLocationAt) return;
+    const seconds = Math.max(0, Math.round((Date.now() - lastLocationAt.getTime()) / 1000));
+    el.textContent = `Last updated ${seconds}s ago`;
+}
+
+async function pollMaidLocation() {
+    const infoEl = document.getElementById('trackingLocationInfo');
+    const response = await DG.api(`/tracking/status/${trackingBookingId}/`);
+    if (!response || response.error || response.lat === null || response.lat === undefined) {
+        if (infoEl && !lastLocationAt) infoEl.textContent = "Waiting for maid's location...";
+        return;
+    }
+    lastLocationAt = new Date(response.updated_at || Date.now());
+    updateLocationAgoText();
+    placeMaidMarker(Number(response.lat), Number(response.lng));
+}
+
+async function refreshTrackingStatus() {
     trackingBooking = await DG.api(`/bookings/${trackingBookingId}/`);
     if (!trackingBooking || trackingBooking.error || !trackingBooking.id) {
-        DG.toast('Tracking unavailable', trackingBooking?.error || 'Booking was not found for your account.', 'error');
-        document.getElementById('trackingMaidName').textContent = 'Booking not found';
-        return;
+        return false;
     }
 
     const maidName = trackingBooking.maid_name || 'Finding maid';
@@ -106,9 +132,41 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('trackingRef').textContent = `#DG${String(trackingBooking.id).padStart(4, '0')}`;
     document.getElementById('trackingProgress').style.width = `${progressForStatus(trackingBooking.status)}%`;
     document.getElementById('trackingOtp').textContent = String(trackingBooking.otp || '').split('').join(' ');
+
+    if (trackingBooking.status === 'completed') {
+        window.location.href = `/payments/${trackingBooking.id}/`;
+        return true;
+    }
+    return trackingBooking.status === 'cancelled';
+}
+
+async function trackingTick() {
+    const stop = await refreshTrackingStatus();
+    if (stop) return true;
+    await pollMaidLocation();
+    return false;
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    const stop = await trackingTick();
+    if (!trackingBooking || trackingBooking.error || !trackingBooking.id) {
+        DG.toast('Tracking unavailable', trackingBooking?.error || 'Booking was not found for your account.', 'error');
+        document.getElementById('trackingMaidName').textContent = 'Booking not found';
+        return;
+    }
+
     document.getElementById('callBtn').addEventListener('click', () => DG.toast('Call requested', 'Phone support will connect you with the assigned maid.', 'info'));
     document.getElementById('chatBtn').addEventListener('click', sendTrackingChat);
     loadMap();
+
+    setInterval(updateLocationAgoText, 1000);
+
+    if (!stop) {
+        const pollTimer = setInterval(async function() {
+            const shouldStop = await trackingTick();
+            if (shouldStop) clearInterval(pollTimer);
+        }, 8000);
+    }
 });
 </script>
 {% endblock %}

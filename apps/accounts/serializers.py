@@ -55,6 +55,8 @@ class MaidRegistrationSerializer(serializers.ModelSerializer):
     experience_years = serializers.IntegerField(required=False, default=0)
     hourly_rate = serializers.DecimalField(max_digits=8, decimal_places=2, required=False)
     bio = serializers.CharField(required=False, allow_blank=True)
+    qr_code = serializers.ImageField(required=False)
+    upi_id = serializers.CharField(max_length=100, required=False, allow_blank=True)
 
     class Meta:
         model = CustomUser
@@ -62,7 +64,7 @@ class MaidRegistrationSerializer(serializers.ModelSerializer):
             'username', 'email', 'first_name', 'last_name', 'phone',
             'password', 'password_confirm',
             'aadhaar_number', 'aadhaar_document', 'experience_years',
-            'hourly_rate', 'bio',
+            'hourly_rate', 'bio', 'qr_code', 'upi_id',
         ]
 
     def validate(self, data):
@@ -77,6 +79,8 @@ class MaidRegistrationSerializer(serializers.ModelSerializer):
             'experience_years': validated_data.pop('experience_years', 0),
             'hourly_rate': validated_data.pop('hourly_rate', 200.00),
             'bio': validated_data.pop('bio', ''),
+            'qr_code': validated_data.pop('qr_code', None),
+            'upi_id': validated_data.pop('upi_id', ''),
         }
 
         user = CustomUser.objects.create_user(
@@ -115,13 +119,17 @@ class MaidProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = MaidProfile
         fields = [
-            'id', 'user', 'aadhaar_number', 'verification_status',
+            'id', 'user', 'aadhaar_number', 'aadhaar_document', 'verification_status',
             'skills', 'experience_years', 'hourly_rate',
             'is_available', 'bio', 'languages',
             'avg_rating', 'total_reviews', 'total_jobs',
-            'profile_completion',
+            'profile_completion', 'qr_code', 'upi_id',
+            'current_lat', 'current_lng', 'last_location_update',
         ]
-        read_only_fields = ['verification_status', 'avg_rating', 'total_reviews', 'total_jobs']
+        read_only_fields = [
+            'verification_status', 'avg_rating', 'total_reviews', 'total_jobs',
+            'current_lat', 'current_lng', 'last_location_update',
+        ]
 
 
 class MaidCardSerializer(serializers.ModelSerializer):
@@ -131,6 +139,8 @@ class MaidCardSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
     city_name = serializers.SerializerMethodField()
     skills = serializers.StringRelatedField(many=True, read_only=True)
+    # Populated by MaidListView only when the caller passes lat/lng.
+    distance_km = serializers.SerializerMethodField()
 
     class Meta:
         model = MaidProfile
@@ -138,6 +148,7 @@ class MaidCardSerializer(serializers.ModelSerializer):
             'id', 'user_id', 'name', 'avatar', 'city_name', 'skills',
             'experience_years', 'hourly_rate', 'is_available',
             'avg_rating', 'total_reviews', 'total_jobs', 'bio',
+            'distance_km',
         ]
 
     def get_name(self, obj):
@@ -155,6 +166,9 @@ class MaidCardSerializer(serializers.ModelSerializer):
 
     def get_city_name(self, obj):
         return obj.user.city.name if obj.user.city else ''
+
+    def get_distance_km(self, obj):
+        return getattr(obj, 'distance_km', None)
 
 
 class LoginSerializer(serializers.Serializer):

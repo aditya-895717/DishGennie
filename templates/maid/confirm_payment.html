@@ -1,0 +1,59 @@
+{% extends "maid/base_maid.html" %}
+{% block page_title %}Confirm Payment{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-6">
+<div class="glass-card text-center mb-4">
+<h5 class="fw-bold mb-1">Job Completed</h5>
+<p class="text-muted mb-0" id="confirmSubtitle">Loading booking details...</p>
+</div>
+
+<div class="booking-card mb-4" id="confirmCard" style="display:none">
+<div class="text-center mb-3">
+<div class="small text-muted mb-1">Amount Due</div>
+<div class="fw-bold fs-3" style="color:var(--primary)" id="confirmAmount">₹0</div>
+</div>
+<div class="d-flex gap-2 flex-wrap">
+<button class="btn-premium flex-fill justify-content-center" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)" id="confirmUpiBtn"><i class="bi bi-qr-code"></i> Confirm Payment Received (UPI)</button>
+<button class="btn-premium flex-fill justify-content-center" style="background:linear-gradient(135deg,#10b981,#059669)" id="confirmCashBtn"><i class="bi bi-cash-stack"></i> Collected Cash Payment</button>
+</div>
+<div class="text-center mt-3" id="confirmedNotice" style="display:none">
+<i class="bi bi-check-circle-fill" style="color:var(--success);font-size:1.5rem"></i>
+<div class="fw-bold mt-1">Payment confirmed</div>
+</div>
+</div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const confirmBookingId = {{ booking_id }};
+
+async function confirmPayment(method) {
+    const endpoint = method === 'upi' ? 'confirm-upi' : 'confirm-cash';
+    const response = await DG.api(`/payments/${confirmBookingId}/${endpoint}/`, { method: 'POST', body: JSON.stringify({}) });
+    if (response?.message) {
+        DG.toast('Payment confirmed', response.message, 'success');
+        document.getElementById('confirmUpiBtn').disabled = true;
+        document.getElementById('confirmCashBtn').disabled = true;
+        document.getElementById('confirmedNotice').style.display = '';
+    } else {
+        DG.toast('Could not confirm', response?.error || 'Please try again.', 'error');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    const booking = await DG.api(`/bookings/${confirmBookingId}/`);
+    if (!booking || booking.error || !booking.id) {
+        document.getElementById('confirmSubtitle').textContent = booking?.error || 'This booking could not be found.';
+        return;
+    }
+    document.getElementById('confirmSubtitle').textContent = `Booking #DG${String(booking.id).padStart(4, '0')} — ${booking.customer_name || 'Customer'}`;
+    document.getElementById('confirmAmount').textContent = DG.formatCurrency(booking.final_amount || booking.total_amount || 0);
+    document.getElementById('confirmCard').style.display = '';
+    document.getElementById('confirmUpiBtn').addEventListener('click', () => confirmPayment('upi'));
+    document.getElementById('confirmCashBtn').addEventListener('click', () => confirmPayment('cash'));
+});
+</script>
+{% endblock %}

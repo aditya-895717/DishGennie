@@ -44,8 +44,8 @@ async function loadJobs() {
 async function completeJob(bookingId) {
     const response = await DG.api(`/bookings/${bookingId}/complete/`, { method: 'POST', body: JSON.stringify({}) });
     if (response?.booking) {
-        DG.toast('Job completed', 'Your earnings have been updated.', 'success');
-        loadJobs();
+        DG.toast('Job completed', 'Redirecting to payment confirmation...', 'success');
+        window.location.href = `/maid-panel/payment/${bookingId}/`;
     } else {
         DG.toast('Could not complete', response?.error || 'Start the service before completing it.', 'error');
     }

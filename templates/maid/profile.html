@@ -26,6 +26,12 @@
 <div class="mt-3"><label class="dg-label">Bio / About</label><textarea class="dg-input" rows="3" id="bio"></textarea></div>
 <div class="mt-3"><label class="dg-label">Languages (comma-separated)</label><input type="text" class="dg-input" id="languages"></div>
 <hr class="my-4">
+<h6 class="fw-bold mb-3">Service Area</h6>
+<div class="d-flex align-items-center gap-3 flex-wrap">
+<button type="button" class="btn-premium-outline btn-premium-sm" style="border-color:#7c3aed;color:#7c3aed" id="setBaseLocationBtn"><i class="bi bi-crosshair"></i> Set My Base Location</button>
+<div class="small text-muted" id="baseLocationStatus">Customers searching "maids near me" only see partners with a saved location.</div>
+</div>
+<hr class="my-4">
 <h6 class="fw-bold mb-3">Documents</h6>
 <p class="small text-muted">Document upload fields are available during registration. Admin verification status updates here after review.</p>
 <button type="submit" class="btn-premium mt-2" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)"><i class="bi bi-check-circle me-1"></i> Save Profile</button>
@@ -48,8 +54,44 @@ async function loadMaidProfile() {
     document.getElementById('completionText').textContent = `${completion}% complete`;
 }
 
+function showBaseLocation(account) {
+    const status = document.getElementById('baseLocationStatus');
+    if (account?.latitude && account?.longitude) {
+        status.innerHTML = `<i class="bi bi-check-circle-fill text-success me-1"></i>Base location saved (${Number(account.latitude).toFixed(4)}, ${Number(account.longitude).toFixed(4)}).`;
+    } else {
+        status.textContent = 'Customers searching "maids near me" only see partners with a saved location.';
+    }
+}
+
+async function setBaseLocation() {
+    const button = document.getElementById('setBaseLocationBtn');
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Locating...';
+
+    const coords = await DG.getPosition();
+    if (!coords) {
+        button.disabled = false;
+        button.innerHTML = '<i class="bi bi-crosshair"></i> Set My Base Location';
+        DG.toast('Location unavailable', 'Allow location access so customers can find you nearby.', 'warning');
+        return;
+    }
+
+    const saved = await DG.saveMyLocation(coords);
+    button.disabled = false;
+    button.innerHTML = '<i class="bi bi-crosshair"></i> Set My Base Location';
+
+    if (saved) {
+        showBaseLocation({ latitude: coords.lat, longitude: coords.lng });
+        DG.toast('Location saved', 'You will now appear in nearby searches.', 'success');
+    } else {
+        DG.toast('Could not save location', 'Please try again in a moment.', 'error');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     loadMaidProfile();
+    DG.api('/accounts/profile/').then(showBaseLocation);
+    document.getElementById('setBaseLocationBtn').addEventListener('click', setBaseLocation);
     document.getElementById('maidProfileForm').addEventListener('submit', async function(event) {
         event.preventDefault();
         const userResponse = await DG.api('/accounts/profile/', {

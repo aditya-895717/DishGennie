@@ -78,6 +78,8 @@ class MaidProfile(models.Model):
     aadhaar_document = models.FileField(upload_to='documents/aadhaar/', blank=True, null=True)
     police_verification = models.FileField(upload_to='documents/police/', blank=True, null=True)
     id_proof = models.FileField(upload_to='documents/id/', blank=True, null=True)
+    qr_code = models.ImageField(upload_to='maid_qr/', blank=True, null=True)
+    upi_id = models.CharField(max_length=100, blank=True, null=True)
     verification_status = models.CharField(
         max_length=20, choices=VerificationStatus.choices, default=VerificationStatus.PENDING
     )
@@ -87,6 +89,12 @@ class MaidProfile(models.Model):
     experience_years = models.PositiveIntegerField(default=0)
     hourly_rate = models.DecimalField(max_digits=8, decimal_places=2, default=200.00)
     is_available = models.BooleanField(default=True)
+    # Last known position, refreshed by the tracking endpoint on every ping.
+    # Denormalised from tracking.LocationUpdate so "maids near me" is a single
+    # indexed query instead of a per-maid lookup of the latest history row.
+    current_lat = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    current_lng = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    last_location_update = models.DateTimeField(null=True, blank=True)
     bio = models.TextField(blank=True)
     languages = models.CharField(max_length=200, blank=True, help_text='Comma-separated languages')
     avg_rating = models.DecimalField(

@@ -3,7 +3,12 @@ Template views — render HTML pages for all 3 dashboards.
 Handles server-side authentication (login/signup/logout) with Django sessions.
 """
 import logging
+import os
 import random
+import uuid
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.db import IntegrityError, transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -11,7 +16,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.views.decorators.cache import never_cache
 from django.conf import settings
-from apps.accounts.email_utils import send_otp_email
+from apps.accounts.email_utils import send_otp_email, send_welcome_email, notify_admin_new_registration
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import CustomUser, MaidProfile
@@ -119,9 +124,12 @@ def signup_page(request):
             errors.append('Passwords do not match.')
 
         try:
-            if CustomUser.objects.filter(username=username, is_active=True).exists():
-                errors.append('This username is already taken.')
-            if email and CustomUser.objects.filter(email=email, is_active=True).exists():
+            # Username uniqueness is enforced at the DB level regardless of
+            # is_active (e.g. a rejected maid keeps their username reserved),
+            # so this check must not filter by is_active either.
+            if CustomUser.objects.filter(username=username).exists():
+                errors.append('This username is already taken, please choose another.')
+            if email and CustomUser.objects.filter(email=email).exists():
                 errors.append('This email is already registered.')
         except Exception as db_err:
             logger.error('Database error during signup validation: %s', db_err)
@@ -186,6 +194,9 @@ def maid_register_page(request):
         experience_years = request.POST.get('experience_years', 0)
         hourly_rate = request.POST.get('hourly_rate', 200)
         bio = request.POST.get('bio', '').strip()
+        upi_id = request.POST.get('upi_id', '').strip()
+        qr_code_file = request.FILES.get('qr_code')
+        aadhaar_document_file = request.FILES.get('aadhaar_document')
 
         # Validation
         errors = []
@@ -199,11 +210,16 @@ def maid_register_page(request):
             errors.append('Password must be at least 8 characters.')
         if password != password_confirm:
             errors.append('Passwords do not match.')
+        if not aadhaar_document_file:
+            errors.append('Aadhaar document is required for verification.')
 
         try:
-            if CustomUser.objects.filter(username=username, is_active=True).exists():
-                errors.append('This username is already taken.')
-            if email and CustomUser.objects.filter(email=email, is_active=True).exists():
+            # Username uniqueness is enforced at the DB level regardless of
+            # is_active (e.g. a rejected maid keeps their username reserved),
+            # so this check must not filter by is_active either.
+            if CustomUser.objects.filter(username=username).exists():
+                errors.append('This username is already taken, please choose another.')
+            if email and CustomUser.objects.filter(email=email).exists():
                 errors.append('This email is already registered.')
         except Exception as db_err:
             logger.error('Database error during maid registration validation: %s', db_err)
@@ -217,6 +233,18 @@ def maid_register_page(request):
                 'form_data': request.POST
             })
 
+        # Files — the session can only carry small strings (it's a signed
+        # cookie in DEBUG), so persist uploads now and keep just the paths.
+        qr_code_path = ''
+        if qr_code_file:
+            temp_name = f'tmp_maid_qr/{uuid.uuid4().hex}_{qr_code_file.name}'
+            qr_code_path = default_storage.save(temp_name, qr_code_file)
+
+        aadhaar_document_path = ''
+        if aadhaar_document_file:
+            temp_name = f'tmp_maid_aadhaar/{uuid.uuid4().hex}_{aadhaar_document_file.name}'
+            aadhaar_document_path = default_storage.save(temp_name, aadhaar_document_file)
+
         # Store registration data in session and send OTP
         try:
             otp = str(random.randint(100000, 999999))
@@ -229,9 +257,12 @@ def maid_register_page(request):
                 'phone': phone,
                 'password': password,
                 'aadhaar_number': aadhaar_number,
+                'aadhaar_document_path': aadhaar_document_path,
                 'experience_years': str(experience_years),
                 'hourly_rate': str(hourly_rate),
                 'bio': bio,
+                'upi_id': upi_id,
+                'qr_code_path': qr_code_path,
                 'otp': otp,
             }
             email_sent = _send_otp_email(email, otp, first_name or username)
@@ -267,6 +298,15 @@ def _send_otp_email(email, otp, name):
     else:
         logger.error("OTP email FAILED for %s — check BREVO_API_KEY", email)
     return email_sent
+
+
+def _cleanup_pending_registration(request, pending):
+    """Remove temp uploads and the session key for a registration that can't proceed."""
+    for key in ('qr_code_path', 'aadhaar_document_path'):
+        path = pending.get(key)
+        if path and default_storage.exists(path):
+            default_storage.delete(path)
+    request.session.pop('pending_registration', None)
 
 
 @never_cache
@@ -310,7 +350,11 @@ def verify_otp_page(request):
                 'reg_type': pending['type'],
             })
 
-        # OTP is valid — create the account
+        # OTP is valid — create the account.
+        # A duplicate username/email can still slip past the earlier check if
+        # someone else took it in the meantime (race condition, or a resumed
+        # OTP session from long ago) — IntegrityError is handled specifically
+        # below so that case fails cleanly instead of a raw 500.
         try:
             if pending['type'] == 'customer':
                 referred_by = None
@@ -320,33 +364,26 @@ def verify_otp_page(request):
                     except CustomUser.DoesNotExist:
                         pass
 
-                user = CustomUser.objects.create_user(
-                    username=pending['username'],
-                    email=pending['email'],
-                    first_name=pending['first_name'],
-                    last_name=pending['last_name'],
-                    phone=pending.get('phone', ''),
-                    password=pending['password'],
-                    role=CustomUser.Role.CUSTOMER,
-                    referred_by=referred_by,
-                    is_verified=True,
-                )
+                with transaction.atomic():
+                    user = CustomUser.objects.create_user(
+                        username=pending['username'],
+                        email=pending['email'],
+                        first_name=pending['first_name'],
+                        last_name=pending['last_name'],
+                        phone=pending.get('phone', ''),
+                        password=pending['password'],
+                        role=CustomUser.Role.CUSTOMER,
+                        referred_by=referred_by,
+                        is_verified=True,
+                    )
+                send_welcome_email(user)
+                notify_admin_new_registration(user)
                 del request.session['pending_registration']
                 login(request, user)
                 messages.success(request, f'Welcome to DishGennie, {pending["first_name"] or pending["username"]}! 🎉')
                 return redirect('user-dashboard')
 
             elif pending['type'] == 'maid':
-                user = CustomUser.objects.create_user(
-                    username=pending['username'],
-                    email=pending['email'],
-                    first_name=pending['first_name'],
-                    last_name=pending['last_name'],
-                    phone=pending.get('phone', ''),
-                    password=pending['password'],
-                    role=CustomUser.Role.MAID,
-                    is_verified=True,
-                )
                 try:
                     exp = int(pending.get('experience_years', 0))
                 except (ValueError, TypeError):
@@ -356,17 +393,62 @@ def verify_otp_page(request):
                 except (ValueError, TypeError):
                     rate = 200.00
 
-                MaidProfile.objects.create(
-                    user=user,
-                    aadhaar_number=pending.get('aadhaar_number', ''),
-                    experience_years=exp,
-                    hourly_rate=rate,
-                    bio=pending.get('bio', ''),
-                )
+                with transaction.atomic():
+                    user = CustomUser.objects.create_user(
+                        username=pending['username'],
+                        email=pending['email'],
+                        first_name=pending['first_name'],
+                        last_name=pending['last_name'],
+                        phone=pending.get('phone', ''),
+                        password=pending['password'],
+                        role=CustomUser.Role.MAID,
+                        is_verified=True,
+                    )
+
+                    profile = MaidProfile.objects.create(
+                        user=user,
+                        aadhaar_number=pending.get('aadhaar_number', ''),
+                        experience_years=exp,
+                        hourly_rate=rate,
+                        bio=pending.get('bio', ''),
+                        upi_id=pending.get('upi_id', ''),
+                    )
+
+                    qr_code_path = pending.get('qr_code_path')
+                    if qr_code_path and default_storage.exists(qr_code_path):
+                        with default_storage.open(qr_code_path, 'rb') as qr_file:
+                            profile.qr_code.save(
+                                os.path.basename(qr_code_path), ContentFile(qr_file.read()), save=True
+                            )
+                        default_storage.delete(qr_code_path)
+
+                    aadhaar_document_path = pending.get('aadhaar_document_path')
+                    if aadhaar_document_path and default_storage.exists(aadhaar_document_path):
+                        with default_storage.open(aadhaar_document_path, 'rb') as aadhaar_file:
+                            profile.aadhaar_document.save(
+                                os.path.basename(aadhaar_document_path), ContentFile(aadhaar_file.read()), save=True
+                            )
+                        default_storage.delete(aadhaar_document_path)
+
+                send_welcome_email(user)
+                notify_admin_new_registration(user)
                 del request.session['pending_registration']
                 login(request, user)
                 messages.success(request, 'Registration successful! Your profile is pending admin verification.')
                 return redirect('maid-dashboard')
+
+        except IntegrityError as exc:
+            logger.warning(
+                'Registration race for username=%s email=%s: %s',
+                pending.get('username'), pending.get('email'), exc,
+            )
+            reg_type = pending['type']
+            _cleanup_pending_registration(request, pending)
+            messages.error(
+                request,
+                'That username or email was just taken by someone else. Please try registering again.'
+            )
+            return redirect('maid-register' if reg_type == 'maid' else 'signup')
 
         except Exception as exc:
             logger.error('Account creation failed: %s', exc, exc_info=True)
@@ -664,6 +746,13 @@ def maid_accepted_jobs(request):
 def maid_navigation(request):
     context = _generate_jwt_context(request.user)
     return render(request, 'maid/navigation.html', context)
+
+
+@maid_required
+def maid_confirm_payment(request, booking_id):
+    context = {'booking_id': booking_id}
+    context.update(_generate_jwt_context(request.user))
+    return render(request, 'maid/confirm_payment.html', context)
 
 
 @maid_required

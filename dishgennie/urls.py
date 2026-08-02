@@ -11,6 +11,8 @@ import pathlib
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 
+from apps.filestore import views as filestore_views
+
 
 def ping(request):
     return JsonResponse({
@@ -57,6 +59,10 @@ urlpatterns = [
     path('api/v1/support/', include('apps.support.api_urls')),
     path('api/v1/admin-panel/', include('apps.analytics.api_urls')),
 
+    # Uploaded media, served out of Postgres by apps.filestore. Not gated on
+    # DEBUG: on Vercel this is the only way media is reachable at all.
+    path('media/<path:path>', filestore_views.serve_media, name='serve-media'),
+
     # Template views (pages)
     path('', include('apps.accounts.urls')),
     path('bookings/', include('apps.bookings.urls')),
@@ -64,7 +70,6 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 # Custom error handlers

@@ -42,9 +42,22 @@ function emptyBookings(title, text, icon = 'calendar-x') {
     `;
 }
 
+function paymentBadge(booking) {
+    if (booking.status !== 'completed') return '';
+    const paid = ['confirmed', 'completed'].includes(booking.payment_status);
+    return paid
+        ? '<span class="badge ms-2" style="background:var(--success-light);color:var(--success)"><i class="bi bi-check-circle-fill me-1"></i>Paid</span>'
+        : '<span class="badge ms-2" style="background:var(--warning-light);color:var(--warning)"><i class="bi bi-hourglass-split me-1"></i>Payment pending</span>';
+}
+
 function bookingCard(booking) {
     const isCancellable = ['pending', 'accepted'].includes(booking.status);
     const canTrack = ACTIVE_STATUSES.includes(booking.status);
+    // Completed bookings previously had no route to the payment page at all —
+    // it was only reachable by being on the live-tracking tab at the moment
+    // the maid marked the job done.
+    const needsPayment = booking.status === 'completed'
+        && !['confirmed', 'completed'].includes(booking.payment_status);
     const maidName = booking.maid_name || 'Assigned maid';
     return `
         <div class="col-md-6 animate-fade-in-up">
@@ -55,7 +68,7 @@ function bookingCard(booking) {
                         <h5 class="mt-1 mb-1" style="font-size:1rem;font-weight:700">${booking.service_name || 'Home Service'}</h5>
                         <div class="small text-muted"><i class="bi bi-calendar me-1"></i>${bookingWhen(booking)}</div>
                     </div>
-                    <span class="status-badge ${booking.status}">${bookingStatusLabel(booking.status)}</span>
+                    <div class="text-end"><span class="status-badge ${booking.status}">${bookingStatusLabel(booking.status)}</span>${paymentBadge(booking)}</div>
                 </div>
                 <div class="d-flex align-items-center gap-3 mt-3 p-3 rounded-3" style="background:var(--gray-50)">
                     <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(maidName)}&background=0d9488&color=fff&size=80" class="rounded-3" width="48" height="48" alt="Maid">
@@ -67,6 +80,7 @@ function bookingCard(booking) {
                 </div>
                 <div class="d-flex gap-2 mt-3 flex-wrap">
                     ${canTrack ? `<a href="/live-tracking/${booking.id}/" class="btn-premium btn-premium-sm flex-fill justify-content-center"><i class="bi bi-geo-alt"></i> Track</a>` : ''}
+                    ${needsPayment ? `<a href="/payments/${booking.id}/" class="btn-premium btn-premium-sm flex-fill justify-content-center"><i class="bi bi-wallet2"></i> Pay Now</a>` : ''}
                     <button type="button" class="btn-premium-outline btn-premium-sm flex-fill justify-content-center" onclick="openBookingChat(${booking.id}, '${maidName.replace(/'/g, "\\'")}')"><i class="bi bi-chat"></i> Chat</button>
                     ${isCancellable ? `<button type="button" class="btn btn-sm btn-outline-danger flex-fill" onclick="cancelBooking(${booking.id})"><i class="bi bi-x-circle"></i> Cancel</button>` : ''}
                 </div>

@@ -1,0 +1,87 @@
+{% extends "user/base_user.html" %}
+{% block nav_subscriptions %}active{% endblock %}
+{% block page_title %}Subscription Plans{% endblock %}
+{% block content %}
+<div class="glass-card mb-4 animate-fade-in-up">
+<div class="d-flex align-items-center gap-3 flex-wrap">
+<div class="kpi-card-icon" style="background:var(--primary-50);color:var(--primary)"><i class="bi bi-stars"></i></div>
+<div>
+<h5 class="fw-bold mb-1" id="currentPlanTitle">No active plan</h5>
+<p class="small text-muted mb-0" id="currentPlanDetail">Pick a plan below to get discounted visits every month.</p>
+</div>
+</div>
+</div>
+
+<div class="row g-4" id="planGrid">
+<div class="col-12">
+<div class="empty-state"><div class="empty-state-icon"><i class="bi bi-hourglass-split"></i></div><h5 class="empty-state-title">Loading plans</h5><p class="empty-state-text">Fetching the available subscriptions.</p></div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function planCard(plan) {
+    const features = Array.isArray(plan.features) ? plan.features : [];
+    return `
+        <div class="col-md-6 col-lg-4 animate-fade-in-up">
+            <div class="booking-card h-100 d-flex flex-column" ${plan.is_popular ? 'style="border-left:4px solid var(--primary)"' : ''}>
+                <div class="booking-card-header">
+                    <div>
+                        <h5 class="mb-1" style="font-size:1.05rem;font-weight:700">${plan.name}</h5>
+                        <div class="small text-muted">${plan.visits_per_month} visits / month</div>
+                    </div>
+                    ${plan.is_popular ? '<span class="status-badge completed">Popular</span>' : ''}
+                </div>
+                <div class="text-center my-3">
+                    <div class="fw-bold" style="font-size:2rem;color:var(--primary)">${DG.formatCurrency(plan.price)}</div>
+                    <div class="small text-muted">per ${plan.duration_days} days • ${plan.discount_percent}% off bookings</div>
+                </div>
+                <ul class="list-unstyled small text-muted flex-fill">
+                    ${features.map(feature => `<li class="mb-1"><i class="bi bi-check-circle-fill me-2" style="color:var(--success)"></i>${feature}</li>`).join('')
+                      || '<li class="mb-1"><i class="bi bi-check-circle-fill me-2" style="color:var(--success)"></i>Priority maid allocation</li>'}
+                </ul>
+                <button type="button" class="btn-premium w-100 justify-content-center mt-3" onclick="subscribe(${plan.id}, '${plan.name.replace(/'/g, "\\'")}')">
+                    <i class="bi bi-lightning-charge-fill"></i> Choose ${plan.name}
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function emptyPlans() {
+    return '<div class="col-12"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-stars"></i></div><h5 class="empty-state-title">No plans available</h5><p class="empty-state-text">Subscription plans will appear here once they are published.</p></div></div>';
+}
+
+async function loadPlans() {
+    const data = await DG.api('/payments/subscriptions/');
+    const plans = DG.asList(data);
+    document.getElementById('planGrid').innerHTML = plans.length ? plans.map(planCard).join('') : emptyPlans();
+    DG.init();
+}
+
+function subscribe(planId, planName) {
+    DG.confirm(
+        'Activate Plan',
+        `Activate the ${planName} plan? Any currently active plan will be replaced.`,
+        async () => {
+            const response = await DG.api('/payments/subscriptions/subscribe/', {
+                method: 'POST',
+                body: JSON.stringify({ plan_id: planId }),
+            });
+            if (response?.subscription_id) {
+                document.getElementById('currentPlanTitle').textContent = response.plan;
+                document.getElementById('currentPlanDetail').textContent =
+                    `${response.visits_remaining} visits remaining • valid until ${DG.formatDate(response.end_date)}`;
+                DG.toast('Plan activated', response.message, 'success');
+            } else {
+                DG.toast('Could not activate', response?.error || 'Please try again.', 'error');
+            }
+        },
+        { icon: 'stars', confirmText: 'Activate' }
+    );
+}
+
+document.addEventListener('DOMContentLoaded', loadPlans);
+</script>
+{% endblock %}

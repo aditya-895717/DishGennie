@@ -4,6 +4,8 @@ from . import views
 urlpatterns = [
     path('initiate/', views.PaymentInitiateView.as_view(), name='api-payment-initiate'),
     path('verify/', views.PaymentVerifyView.as_view(), name='api-payment-verify'),
+    path('<int:booking_id>/confirm-upi/', views.ConfirmUpiPaymentView.as_view(), name='api-payment-confirm-upi'),
+    path('<int:booking_id>/confirm-cash/', views.ConfirmCashPaymentView.as_view(), name='api-payment-confirm-cash'),
     path('wallet/', views.WalletView.as_view(), name='api-wallet'),
     path('wallet/add/', views.WalletAddView.as_view(), name='api-wallet-add'),
     path('subscriptions/', views.SubscriptionListView.as_view(), name='api-subscriptions'),

@@ -6,6 +6,7 @@ from datetime import timedelta
 from rest_framework import generics, views, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from django.db import IntegrityError
 from django.utils import timezone
 from .models import Payment, Wallet, WalletTransaction, Subscription, UserSubscription, MaidPayout
 from .serializers import (
@@ -13,6 +14,7 @@ from .serializers import (
     SubscriptionSerializer, MaidPayoutSerializer,
 )
 from apps.accounts.permissions import IsAdmin, IsMaid
+from apps.bookings.models import Booking
 
 
 class PaymentInitiateView(views.APIView):
@@ -24,14 +26,25 @@ class PaymentInitiateView(views.APIView):
         method = request.data.get('method', 'razorpay')
         amount = request.data.get('amount', 0)
 
-        payment = Payment.objects.create(
-            booking_id=booking_id,
-            user=request.user,
-            amount=amount,
-            method=method,
-        )
+        try:
+            booking = Booking.objects.get(pk=booking_id)
+        except (Booking.DoesNotExist, ValueError, TypeError):
+            return Response({'error': 'Booking not found.'}, status=404)
 
-        if method == 'razorpay':
+        # Payment.booking is a OneToOneField — a second create() for the same
+        # booking (double submit, or a manual confirm-upi/confirm-cash call
+        # already having created one) raises IntegrityError. get_or_create
+        # avoids that; the IntegrityError catch is defense-in-depth for the
+        # remaining race window between the check and the write.
+        try:
+            payment, _ = Payment.objects.get_or_create(
+                booking=booking,
+                defaults={'user': request.user, 'amount': amount, 'method': method},
+            )
+        except IntegrityError:
+            return Response({'error': 'A payment for this booking is already being processed.'}, status=409)
+
+        if method == 'razorpay' and not payment.razorpay_order_id:
             # In production, create Razorpay order here
             payment.razorpay_order_id = f"order_demo_{payment.pk}"
             payment.save()
@@ -60,6 +73,45 @@ class PaymentVerifyView(views.APIView):
         payment.completed_at = timezone.now()
         payment.save()
         return Response({'message': 'Payment verified!', 'status': 'completed'})
+
+
+class MaidConfirmPaymentView(views.APIView):
+    """Base for maid-initiated manual payment confirmation (UPI or cash)."""
+    permission_classes = [IsAuthenticated, IsMaid]
+    method_value = None  # set by subclass
+
+    def post(self, request, booking_id):
+        try:
+            booking = Booking.objects.get(pk=booking_id)
+        except Booking.DoesNotExist:
+            return Response({'error': 'Booking not found.'}, status=404)
+
+        if booking.maid_id != request.user.pk:
+            return Response({'error': 'You are not assigned to this booking.'}, status=403)
+
+        payment, _ = Payment.objects.get_or_create(
+            booking=booking,
+            defaults={'user': booking.customer, 'amount': booking.final_amount},
+        )
+        payment.method = self.method_value
+        payment.status = Payment.Status.CONFIRMED
+        payment.confirmed_by_maid_at = timezone.now()
+        payment.save()
+
+        return Response({
+            'message': 'Payment confirmed.',
+            'payment': PaymentSerializer(payment).data,
+        })
+
+
+class ConfirmUpiPaymentView(MaidConfirmPaymentView):
+    """Maid confirms UPI payment received (manual, no gateway)."""
+    method_value = Payment.Method.UPI
+
+
+class ConfirmCashPaymentView(MaidConfirmPaymentView):
+    """Maid confirms cash payment collected."""
+    method_value = Payment.Method.CASH
 
 
 class WalletView(views.APIView):

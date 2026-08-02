@@ -12,11 +12,12 @@ class Payment(models.Model):
         WALLET = 'wallet', 'Wallet'
         RAZORPAY = 'razorpay', 'Razorpay'
         UPI = 'upi', 'UPI'
-        COD = 'cod', 'Cash on Delivery'
+        CASH = 'cash', 'Cash'
 
     class Status(models.TextChoices):
         PENDING = 'pending', 'Pending'
         COMPLETED = 'completed', 'Completed'
+        CONFIRMED = 'confirmed', 'Confirmed'
         FAILED = 'failed', 'Failed'
         REFUNDED = 'refunded', 'Refunded'
 
@@ -29,6 +30,7 @@ class Payment(models.Model):
     razorpay_payment_id = models.CharField(max_length=100, blank=True)
     razorpay_signature = models.CharField(max_length=200, blank=True)
     transaction_id = models.CharField(max_length=100, blank=True)
+    confirmed_by_maid_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
 

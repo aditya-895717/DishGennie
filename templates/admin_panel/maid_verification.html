@@ -9,6 +9,12 @@
 function emptyVerification() {
     return '<div class="col-12"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-shield-check"></i></div><h5 class="empty-state-title">No pending verifications</h5><p class="empty-state-text">New maid applications will appear here.</p></div></div>';
 }
+function aadhaarLink(profile) {
+    if (profile.aadhaar_document) {
+        return `<a href="${profile.aadhaar_document}" target="_blank" rel="noopener" class="badge text-decoration-none" style="background:var(--info-light);color:var(--info)"><i class="bi bi-file-earmark-text me-1"></i>View Aadhaar Document</a>`;
+    }
+    return `<span class="badge" style="background:var(--gray-100);color:var(--gray-500)"><i class="bi bi-file-earmark-x me-1"></i>No Aadhaar document uploaded</span>`;
+}
 function applicantCard(profile) {
     const user = profile.user || {};
     const name = `${user.first_name || user.username || 'Applicant'} ${user.last_name || ''}`.trim();
@@ -19,7 +25,7 @@ function applicantCard(profile) {
                 <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f59e0b&color=fff&size=80" class="rounded-3" width="48" height="48">
                 <div class="flex-fill small"><div class="mb-1"><i class="bi bi-geo-alt me-1 text-muted"></i>${user.address || '-'}</div><div class="mb-1"><i class="bi bi-briefcase me-1 text-muted"></i>${profile.experience_years} yrs experience</div><div><i class="bi bi-telephone me-1 text-muted"></i>${user.phone || '-'}</div></div>
             </div>
-            <div class="mt-3"><div class="small fw-bold mb-2">Documents Submitted:</div><div class="d-flex gap-2 flex-wrap"><span class="badge" style="background:var(--info-light);color:var(--info)"><i class="bi bi-file-earmark me-1"></i>Aadhaar</span><span class="badge" style="background:var(--info-light);color:var(--info)"><i class="bi bi-file-earmark me-1"></i>ID Proof</span></div></div>
+            <div class="mt-3"><div class="small fw-bold mb-2">Documents Submitted:</div><div class="d-flex gap-2 flex-wrap">${aadhaarLink(profile)}</div></div>
             <div class="mt-3"><label class="dg-label">Remarks</label><textarea class="dg-input" rows="2" id="remarks-${profile.id}" placeholder="Add verification remarks..." style="font-size:.85rem"></textarea></div>
             <div class="d-flex gap-2 mt-3">
                 <button class="btn-premium flex-fill justify-content-center" style="background:linear-gradient(135deg,#10b981,#059669)" onclick="verifyMaid(${profile.id}, 'approve')"><i class="bi bi-check-circle"></i> Approve</button>
@@ -42,6 +48,12 @@ async function verifyMaid(profileId, action) {
         DG.toast('Verification failed', response?.error || 'Try again.', 'error');
     }
 }
-document.addEventListener('DOMContentLoaded', loadVerification);
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadVerification();
+    if (window.location.hash) {
+        const target = document.querySelector(window.location.hash);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+});
 </script>
 {% endblock %}

@@ -17,4 +17,6 @@ urlpatterns = [
     path('admin/users/', views.AdminUserListView.as_view(), name='api-admin-users'),
     path('admin/maids/', views.AdminMaidProfileListView.as_view(), name='api-admin-maids'),
     path('admin/verify/<int:pk>/', views.AdminMaidVerificationView.as_view(), name='api-admin-verify'),
+    path('maids/<int:pk>/approve/', views.ApproveMaidView.as_view(), name='api-maid-approve'),
+    path('maids/<int:pk>/reject/', views.RejectMaidView.as_view(), name='api-maid-reject'),
 ]

@@ -38,10 +38,16 @@
 <div class="form-floating"><input type="email" class="form-control" id="mEmail" name="email" placeholder="Email" required value="{{ form_data.email|default:'' }}"><label>Email</label></div>
 <div class="form-floating"><input type="tel" class="form-control" id="mPhone" name="phone" placeholder="Phone" required value="{{ form_data.phone|default:'' }}"><label>Phone Number</label></div>
 <div class="form-floating"><input type="text" class="form-control" id="mAadhaar" name="aadhaar_number" placeholder="Aadhaar" maxlength="12" value="{{ form_data.aadhaar_number|default:'' }}"><label>Aadhaar Number</label></div>
-<div class="mb-3"><label class="dg-label">Aadhaar Document</label><input type="file" class="form-control" id="mAadhaarDoc" name="aadhaar_document" accept=".pdf,.jpg,.png"></div>
+<div class="mb-3"><label class="dg-label">Aadhaar Document</label><input type="file" class="form-control" id="mAadhaarDoc" name="aadhaar_document" accept=".pdf,.jpg,.png" required></div>
 <div class="row g-2">
 <div class="col-6"><div class="form-floating"><input type="number" class="form-control" id="mExp" name="experience_years" placeholder="Exp" min="0" value="{{ form_data.experience_years|default:'0' }}"><label>Experience (Years)</label></div></div>
 <div class="col-6"><div class="form-floating"><input type="number" class="form-control" id="mRate" name="hourly_rate" placeholder="Rate" value="{{ form_data.hourly_rate|default:'200' }}"><label>Hourly Rate (₹)</label></div></div>
+</div>
+<div class="mt-2 mb-1"><span class="dg-label" style="font-weight:700">Payment Details (Optional)</span></div>
+<div class="form-floating"><input type="text" class="form-control" id="mUpiId" name="upi_id" placeholder="yourname@upi" value="{{ form_data.upi_id|default:'' }}"><label>UPI ID</label></div>
+<div class="form-text mb-2" style="font-size:.78rem;color:var(--gray-500)">Required to receive UPI payments from customers — you can also add this later from your profile.</div>
+<div class="mb-3"><label class="dg-label">QR Code Upload</label><input type="file" class="form-control" id="mQrCode" name="qr_code" accept="image/*">
+<div class="form-text" style="font-size:.78rem;color:var(--gray-500)">Upload your UPI QR code so customers can pay you directly after service completion.</div>
 </div>
 <div class="form-floating"><textarea class="form-control" id="mBio" name="bio" placeholder="Bio" style="height:80px">{{ form_data.bio|default:'' }}</textarea><label>Short Bio</label></div>
 <div class="form-floating"><input type="password" class="form-control" id="mPassword" name="password" placeholder="Password" required minlength="8"><label>Password</label></div>

@@ -211,6 +211,38 @@ const DG = {
         return Array.isArray(data) ? data : (data?.results || []);
     },
 
+    /**
+     * One-shot browser geolocation, promise-style.
+     * Resolves to {lat, lng} or null — never rejects, so callers can simply
+     * fall back to a non-location code path when the user denies access.
+     */
+    getPosition({ timeout = 8000, highAccuracy = true } = {}) {
+        return new Promise(resolve => {
+            if (!navigator.geolocation) {
+                resolve(null);
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                pos => resolve({
+                    lat: Number(pos.coords.latitude.toFixed(6)),
+                    lng: Number(pos.coords.longitude.toFixed(6)),
+                }),
+                () => resolve(null),
+                { enableHighAccuracy: highAccuracy, timeout, maximumAge: 60000 }
+            );
+        });
+    },
+
+    /** Save the given coordinates onto the signed-in user's account. */
+    async saveMyLocation(coords) {
+        if (!coords) return false;
+        const response = await this.api('/accounts/profile/', {
+            method: 'PATCH',
+            body: JSON.stringify({ latitude: coords.lat, longitude: coords.lng }),
+        });
+        return Boolean(response?.id);
+    },
+
     setCountBadge(selector, count) {
         const value = Number(count || 0);
         document.querySelectorAll(selector).forEach(badge => {

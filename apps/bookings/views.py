@@ -253,8 +253,10 @@ class StartBookingView(views.APIView):
         if otp != booking.otp:
             return Response({'error': 'Invalid OTP.'}, status=400)
 
+        now = timezone.now()
         booking.status = Booking.Status.IN_PROGRESS
-        booking.started_at = timezone.now()
+        booking.started_at = now
+        booking.otp_verified_at = now
         booking.save()
         _notify(
             booking.customer,

@@ -28,6 +28,7 @@ urlpatterns = [
     path('my-bookings/', template_views.my_bookings_page, name='my-bookings'),
     path('live-tracking/<int:booking_id>/', template_views.live_tracking_page, name='live-tracking'),
     path('wallet/', template_views.wallet_page, name='wallet'),
+    path('subscriptions/', template_views.subscriptions_page, name='subscriptions'),
     path('support/', template_views.support_page, name='support'),
     path('profile/', template_views.profile_page, name='user-profile'),
 
@@ -36,6 +37,7 @@ urlpatterns = [
     path('maid-panel/requests/', template_views.maid_requests, name='maid-requests'),
     path('maid-panel/jobs/', template_views.maid_accepted_jobs, name='maid-jobs'),
     path('maid-panel/navigation/', template_views.maid_navigation, name='maid-navigation'),
+    path('maid-panel/payment/<int:booking_id>/', template_views.maid_confirm_payment, name='maid-confirm-payment'),
     path('maid-panel/earnings/', template_views.maid_earnings, name='maid-earnings'),
     path('maid-panel/reviews/', template_views.maid_reviews, name='maid-reviews'),
     path('maid-panel/profile/', template_views.maid_profile_settings, name='maid-profile-settings'),

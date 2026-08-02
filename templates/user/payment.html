@@ -1,0 +1,107 @@
+{% extends "user/base_user.html" %}
+{% block page_title %}Payment{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-6">
+<div class="glass-card text-center mb-4">
+<h5 class="fw-bold mb-1">Service Completed</h5>
+<p class="text-muted mb-0" id="paymentSubtitle">Loading payment details...</p>
+</div>
+
+<div class="booking-card mb-4" id="paymentCard" style="display:none">
+<div class="text-center mb-3">
+<div class="small text-muted mb-1">Amount Due</div>
+<div class="fw-bold fs-3" style="color:var(--primary)" id="paymentAmount">₹0</div>
+</div>
+
+<div id="upiBlock" class="text-center mb-3" style="display:none">
+<img id="paymentQr" src="" alt="UPI QR Code" class="rounded-3 mb-2" style="max-width:220px;width:100%;border:1px solid var(--gray-200)">
+<div class="small text-muted">UPI ID</div>
+<div class="fw-bold" id="paymentUpiId">-</div>
+<p class="small text-muted mt-2">Scan the QR code with any UPI app and pay the maid directly. There is no online gateway for this — payment is confirmed by the maid once received.</p>
+</div>
+
+<div id="cashBlock" class="text-center mb-3" style="display:none">
+<i class="bi bi-cash-stack" style="font-size:2.5rem;color:var(--primary)"></i>
+<p class="small text-muted mt-2">Pay the maid in cash. She will confirm the collected amount in her app.</p>
+</div>
+
+<div id="noQrNotice" class="small text-muted text-center" style="display:none">This maid has not uploaded a UPI QR code yet — please pay by cash.</div>
+
+<div class="text-center p-3 rounded-3" id="paymentPending" style="background:var(--gray-50);display:none">
+<div class="spinner-border spinner-border-sm me-2" style="color:var(--primary)"></div>
+<span class="small text-muted">Waiting for the maid to confirm she has received the payment...</span>
+</div>
+
+<div class="text-center p-3 rounded-3" id="paymentConfirmed" style="background:var(--success-light);display:none">
+<i class="bi bi-check-circle-fill" style="color:var(--success);font-size:1.75rem"></i>
+<div class="fw-bold mt-1" style="color:var(--success)">Payment confirmed by the maid</div>
+<div class="small text-muted" id="paymentConfirmedMethod"></div>
+<a href="{% url 'my-bookings' %}" class="btn-premium btn-premium-sm mt-3"><i class="bi bi-list-check"></i> Back to My Bookings</a>
+</div>
+</div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const paymentBookingId = {{ booking_id }};
+const PAID_STATUSES = ['confirmed', 'completed'];
+
+const METHOD_LABELS = {
+    upi: 'Confirmed as received via UPI.',
+    cash: 'Confirmed as collected in cash.',
+    razorpay: 'Confirmed via Razorpay.',
+    wallet: 'Paid from your DishGennie wallet.',
+};
+
+/** Returns true once the maid has confirmed, so polling can stop. */
+function renderPaymentState(booking) {
+    const paid = PAID_STATUSES.includes(booking.payment_status);
+    document.getElementById('paymentPending').style.display = paid ? 'none' : '';
+    document.getElementById('paymentConfirmed').style.display = paid ? '' : 'none';
+    if (paid) {
+        document.getElementById('paymentConfirmedMethod').textContent =
+            METHOD_LABELS[booking.payment_method] || '';
+        document.getElementById('upiBlock').style.display = 'none';
+        document.getElementById('cashBlock').style.display = 'none';
+    }
+    return paid;
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    const booking = await DG.api(`/bookings/${paymentBookingId}/`);
+    if (!booking || booking.error || !booking.id) {
+        document.getElementById('paymentSubtitle').textContent = booking?.error || 'This booking could not be found for your account.';
+        return;
+    }
+
+    document.getElementById('paymentSubtitle').textContent = `Booking #DG${String(booking.id).padStart(4, '0')} — pay ${booking.maid_name || 'your maid'} directly.`;
+    document.getElementById('paymentAmount').textContent = DG.formatCurrency(booking.final_amount || booking.total_amount || 0);
+    document.getElementById('paymentCard').style.display = '';
+
+    if (booking.maid_qr_code) {
+        document.getElementById('paymentQr').src = booking.maid_qr_code;
+        document.getElementById('paymentUpiId').textContent = booking.maid_upi_id || '-';
+        document.getElementById('upiBlock').style.display = '';
+    } else {
+        document.getElementById('noQrNotice').style.display = '';
+    }
+    document.getElementById('cashBlock').style.display = '';
+
+    // Confirmation is manual and happens on the maid's device, so the only
+    // way the customer learns about it is by polling — same cadence as the
+    // tracking page.
+    if (renderPaymentState(booking)) return;
+    const timer = setInterval(async function() {
+        const latest = await DG.api(`/bookings/${paymentBookingId}/`);
+        if (!latest || latest.error || !latest.id) return;
+        if (renderPaymentState(latest)) {
+            clearInterval(timer);
+            DG.toast('Payment confirmed', 'The maid has confirmed your payment.', 'success');
+        }
+    }, 8000);
+});
+</script>
+{% endblock %}

@@ -2,6 +2,17 @@
 {% block nav_find %}active{% endblock %}
 {% block page_title %}Find a Maid{% endblock %}
 {% block content %}
+<div class="glass-card mb-4">
+<div class="d-flex align-items-center gap-3 flex-wrap">
+<button type="button" class="btn-premium btn-premium-sm" id="nearMeBtn"><i class="bi bi-crosshair"></i> Maids Near Me</button>
+<div class="d-flex align-items-center gap-2" id="radiusWrap" style="display:none !important">
+<label class="dg-label mb-0 small">Within</label>
+<select class="dg-input" id="filterRadius" style="width:auto"><option value="5">5 km</option><option value="10" selected>10 km</option><option value="25">25 km</option><option value="50">50 km</option></select>
+</div>
+<div class="small text-muted" id="nearMeStatus">Search the whole city, or use your location to sort by distance.</div>
+<button type="button" class="btn-premium-outline btn-premium-sm ms-auto" id="clearNearMeBtn" style="display:none"><i class="bi bi-x-lg"></i> Clear location</button>
+</div>
+</div>
 <div class="row g-3 mb-4">
 <div class="col-md-4"><input type="text" class="dg-input" id="searchCity" placeholder="Search by city..."></div>
 <div class="col-md-3"><select class="dg-input" id="filterService"><option value="">All Services</option><option value="Cleaning">Cleaning</option><option value="Cooking">Cooking</option><option value="Laundry">Laundry</option><option value="Baby Care">Baby Care</option><option value="Elder Care">Elder Care</option><option value="Deep Cleaning">Deep Cleaning</option></select></div>
@@ -22,6 +33,9 @@ function maidCard(maid) {
     const skills = (maid.skills || []).slice(0, 3);
     const avatar = maid.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0d9488&color=fff&size=136&bold=true`;
     const city = maid.city_name || 'Nearby';
+    const distance = maid.distance_km === null || maid.distance_km === undefined
+        ? ''
+        : ` • ${Number(maid.distance_km).toFixed(1)} km away`;
     const rating = Number(maid.avg_rating || 0).toFixed(1);
     const reviews = maid.total_reviews || 0;
     const jobs = maid.total_jobs || 0;
@@ -35,7 +49,7 @@ function maidCard(maid) {
                     <div class="maid-card-info">
                         <h5>${name}</h5>
                         <div class="maid-card-rating"><i class="bi bi-star-fill"></i><strong>${rating}</strong><span class="ms-1">(${reviews} reviews)</span></div>
-                        <div class="small text-muted mt-1"><i class="bi bi-geo-alt me-1"></i>${city} • ${maid.experience_years || 0} yrs exp</div>
+                        <div class="small text-muted mt-1"><i class="bi bi-geo-alt me-1"></i>${city} • ${maid.experience_years || 0} yrs exp${distance}</div>
                     </div>
                     <span class="maid-card-verified"><i class="bi bi-patch-check-fill"></i> Verified</span>
                 </div>
@@ -55,15 +69,31 @@ function maidCard(maid) {
 }
 
 function emptyMaidState() {
+    const text = origin
+        ? 'No verified maids are within this radius yet. Widen the distance or clear your location.'
+        : 'Try another city, service, or rating filter.';
     return `
         <div class="col-12">
             <div class="empty-state">
                 <div class="empty-state-icon"><i class="bi bi-person-x"></i></div>
                 <h5 class="empty-state-title">No maids match these filters</h5>
-                <p class="empty-state-text">Try another city, service, or rating filter.</p>
+                <p class="empty-state-text">${text}</p>
             </div>
         </div>
     `;
+}
+
+// Set once the customer shares their position; switches the API call over to
+// the radius search and the sort dropdown to nearest-first.
+let origin = null;
+
+function syncLocationControls() {
+    document.getElementById('radiusWrap').style.display = origin ? 'flex' : 'none';
+    document.getElementById('clearNearMeBtn').style.display = origin ? '' : 'none';
+    document.getElementById('sortBy').disabled = Boolean(origin);
+    document.getElementById('nearMeStatus').textContent = origin
+        ? 'Showing verified maids nearest to you first.'
+        : 'Search the whole city, or use your location to sort by distance.';
 }
 
 async function loadMaids() {
@@ -77,7 +107,14 @@ async function loadMaids() {
     if (city) params.set('city', city);
     if (service) params.set('service', service);
     if (minRating) params.set('min_rating', minRating);
-    if (ordering) params.set('ordering', ordering);
+
+    if (origin) {
+        params.set('lat', origin.lat);
+        params.set('lng', origin.lng);
+        params.set('radius_km', document.getElementById('filterRadius').value);
+    } else if (ordering) {
+        params.set('ordering', ordering);
+    }
 
     const data = await DG.api(`/accounts/maids/?${params.toString()}`);
     const maids = data?.results || data || [];
@@ -85,12 +122,40 @@ async function loadMaids() {
     DG.init();
 }
 
+async function useMyLocation() {
+    const button = document.getElementById('nearMeBtn');
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Locating...';
+
+    const coords = await DG.getPosition();
+    button.disabled = false;
+    button.innerHTML = '<i class="bi bi-crosshair"></i> Maids Near Me';
+
+    if (!coords) {
+        DG.toast('Location unavailable', 'Allow location access in your browser to search by distance.', 'warning');
+        return;
+    }
+
+    origin = coords;
+    syncLocationControls();
+    // Remembered on the account so booking and future searches can reuse it.
+    DG.saveMyLocation(coords);
+    loadMaids();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const reload = DG.debounce(loadMaids, 250);
-    ['searchCity', 'filterService', 'filterRating', 'sortBy'].forEach(id => {
+    ['searchCity', 'filterService', 'filterRating', 'sortBy', 'filterRadius'].forEach(id => {
         const element = document.getElementById(id);
         element.addEventListener(id === 'searchCity' ? 'input' : 'change', reload);
     });
+    document.getElementById('nearMeBtn').addEventListener('click', useMyLocation);
+    document.getElementById('clearNearMeBtn').addEventListener('click', function() {
+        origin = null;
+        syncLocationControls();
+        loadMaids();
+    });
+    syncLocationControls();
     loadMaids();
 });
 </script>
